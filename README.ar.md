@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/abokhalid966/clipdrop/raw/main/updates/ClipDrop-Setup.exe"><img src="https://img.shields.io/badge/Download_for_Windows-7cf29a?style=for-the-badge&logo=windows&logoColor=0e0f13&labelColor=7cf29a&color=7cf29a" alt="تحميل لويندوز" height="44"></a>
+  <a href="https://github.com/abokhalid966/clipdrop/raw/main/updates/ClipDrop-Setup.exe"><img src="docs/download-ar.png" alt="تحميل لويندوز" height="73"></a>
 </p>
 
 <p align="center">
