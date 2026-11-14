@@ -5,3 +5,4 @@ __pycache__/
 ClipDrop.zip
 ClipDrop-Setup-*.exe
 !updates/ClipDrop-Setup-*.exe
+!updates/ClipDrop-Setup.exe

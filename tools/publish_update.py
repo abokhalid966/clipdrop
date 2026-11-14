@@ -19,9 +19,10 @@ en = en.replace("<!-- en -->", "").strip()
 ar = ar.strip()
 out = root / "updates"
 out.mkdir(exist_ok=True)
-for old in out.glob("ClipDrop-Setup-*.exe"):   # keep only the newest setup in the folder
+for old in out.glob("ClipDrop-Setup-*.exe"):   # keep only the newest numbered setup in the folder
     old.unlink()
 shutil.copyfile(exe, out / exe.name)
+shutil.copyfile(exe, out / "ClipDrop-Setup.exe")   # always the newest: the download link on the GitHub page
 data = exe.read_bytes()
 (out / "latest.json").write_text(json.dumps({
     "version": version, "file": exe.name, "size": len(data),
