@@ -1,0 +1,8 @@
+{
+  "version": "5.1",
+  "file": "ClipDrop-Setup-5.1.exe",
+  "size": 244215,
+  "sha256": "e7ff70d7853c301afa0673258086f0729b1f2b3987f788c68c1a586c20c00abc",
+  "notes_en": "**ClipDrop 5.1**\n- **Automatic updates.** ClipDrop now checks for new versions and updates itself with one tap. Your settings, clips and files stay.\n- New **Updates** section in Settings: check now, check automatically, or install automatically.\n- \"Check for updates\" in the tray menu.\n- Safety: every update is checked against its SHA-256 fingerprint before it installs.\n\nAlso in 5.0: file sharing between PC and phone, Arabic, and the new Settings page.",
+  "notes_ar": "**ClipDrop 5.1**\n- **تحديثات تلقائية.** ClipDrop صار يبحث عن النسخ الجديدة ويحدّث نفسه بضغطة وحدة. إعداداتك ومقاطعك وملفاتك تبقى.\n- قسم **التحديثات** الجديد في الإعدادات: ابحث الآن، أو البحث التلقائي، أو التثبيت التلقائي.\n- «البحث عن تحديثات» في قائمة الأيقونة جنب الساعة.\n- أمان: كل تحديث يتأكد من بصمته (SHA-256) قبل التثبيت.\n\nوفي 5.0: مشاركة الملفات بين الكمبيوتر والجوال، العربي، وصفحة الإعدادات الجديدة."
+}

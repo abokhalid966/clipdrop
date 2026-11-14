@@ -73,8 +73,9 @@ do if something doesn't work.
 ## Releasing a new version (for maintainers)
 1. Bump `VERSION` in `clipdrop.py` and `!define VERSION` in `setup.nsi`.
 2. Build the setup: `makensis setup.nsi` (NSIS 3).
-3. Make `SHA256SUMS.txt`: `sha256sum ClipDrop-Setup-X.Y.exe > SHA256SUMS.txt`.
-4. Publish a GitHub release tagged `vX.Y` with both files attached. Put the
-   English notes first, then `<!-- ar -->`, then the Arabic notes.
-Installed copies find it within a day, show "What's new", check the SHA-256
-fingerprint and update themselves.
+3. Write the notes (English, then a line `<!-- ar -->`, then Arabic) and run
+   `python tools/publish_update.py ClipDrop-Setup-X.Y.exe notes.md`.
+4. Commit and push `updates/` to `main`.
+Installed copies read `updates/latest.json` within a day, show "What's new",
+check the SHA-256 fingerprint and update themselves. The full history is in
+`updates/CHANGES.md`.

@@ -862,23 +862,25 @@ def version_tuple(v):
 class Updater:
     """Looks for a newer ClipDrop on GitHub, downloads the setup, checks its
     SHA-256 fingerprint, then runs it quietly. The setup closes ClipDrop,
-    updates the files (settings and clips stay) and starts it again."""
+    updates the files (settings and clips stay) and starts it again.
 
-    API = "https://api.github.com/repos/{repo}/releases/latest"
+    New versions are published as updates/latest.json + the setup .exe in the
+    GitHub repository (see README, "Releasing a new version")."""
+
+    BASE = "https://raw.githubusercontent.com/{repo}/main/updates/"
 
     def __init__(self, app):
         self.app = app
         self.lock = threading.Lock()
         self.state = {"status": "idle", "current": VERSION, "available": False, "version": "",
                       "notes_en": "", "notes_ar": "", "size": 0, "progress": 0, "error": "",
-                      "checked_at": 0, "page": f"https://github.com/{UPDATE_REPO}/releases"}
+                      "checked_at": 0, "page": f"https://github.com/{UPDATE_REPO}/blob/main/updates/CHANGES.md"}
         self._release = None
         self._told = ""
 
     def _get(self, url, timeout=20):
         import urllib.request
-        req = urllib.request.Request(url, headers={"User-Agent": f"ClipDrop/{VERSION}",
-                                                   "Accept": "application/vnd.github+json"})
+        req = urllib.request.Request(url, headers={"User-Agent": f"ClipDrop/{VERSION}", "Cache-Control": "no-cache"})
         return urllib.request.urlopen(req, timeout=timeout)
 
     def check(self):
@@ -887,19 +889,19 @@ class Updater:
                 return self.state
             self.state.update(status="checking", error="")
         try:
-            rel = json.loads(self._get(self.API.format(repo=UPDATE_REPO)).read())
-            ver = (rel.get("tag_name") or "").lstrip("vV")
-            exe = next((a for a in rel.get("assets", []) if a["name"].lower().endswith(".exe")), None)
-            sums = next((a for a in rel.get("assets", []) if a["name"].lower().startswith("sha256")), None)
-            body = rel.get("body") or ""
-            en, _, ar = body.partition("<!-- ar -->")
-            en = en.replace("<!-- en -->", "").strip()
-            newer = bool(exe and sums and version_tuple(ver) > version_tuple(VERSION))
-            self._release = {"exe": exe, "sums": sums, "version": ver} if newer else None
+            base = self.BASE.format(repo=UPDATE_REPO)
+            rel = json.loads(self._get(base + "latest.json").read())
+            ver = str(rel.get("version") or "")
+            name = os.path.basename(str(rel.get("file") or ""))
+            sha = str(rel.get("sha256") or "").lower()
+            ok = name.lower().endswith(".exe") and re.fullmatch(r"[0-9a-f]{64}", sha)
+            newer = bool(ok and version_tuple(ver) > version_tuple(VERSION))
+            self._release = ({"url": base + urllib.parse.quote(name), "name": name, "sha256": sha,
+                              "size": int(rel.get("size") or 0), "version": ver} if newer else None)
             self.state.update(status="idle", available=newer, version=ver if newer else "",
-                              notes_en=en if newer else "", notes_ar=ar.strip() if newer else "",
-                              size=exe["size"] if newer else 0, checked_at=time.time(),
-                              page=rel.get("html_url") or self.state["page"])
+                              notes_en=str(rel.get("notes_en") or "") if newer else "",
+                              notes_ar=str(rel.get("notes_ar") or "") if newer else "",
+                              size=int(rel.get("size") or 0) if newer else 0, checked_at=time.time())
             if newer:
                 print(f"Update available: {ver}")
         except Exception as e:
@@ -928,17 +930,10 @@ class Updater:
             folder.mkdir(parents=True, exist_ok=True)
             for old in folder.glob("*"):
                 old.unlink(missing_ok=True)
-            sums = self._get(rel["sums"]["browser_download_url"]).read().decode("utf-8", "replace")
-            want = ""
-            for line in sums.splitlines():
-                parts = line.split()
-                if len(parts) >= 2 and parts[-1].lstrip("*") == rel["exe"]["name"]:
-                    want = parts[0].lower()
-            if not re.fullmatch(r"[0-9a-f]{64}", want):
-                raise RuntimeError("The update has no fingerprint, so it wasn't installed.")
-            exe = folder / rel["exe"]["name"]
-            h, got, total = hashlib.sha256(), 0, rel["exe"]["size"] or 1
-            with self._get(rel["exe"]["browser_download_url"], timeout=60) as r, open(exe, "wb") as f:
+            want = rel["sha256"]
+            exe = folder / rel["name"]
+            h, got, total = hashlib.sha256(), 0, rel["size"] or 1
+            with self._get(rel["url"], timeout=60) as r, open(exe, "wb") as f:
                 while True:
                     chunk = r.read(256 * 1024)
                     if not chunk:
