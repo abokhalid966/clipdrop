@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.1"
+VERSION = "5.2"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -1001,6 +1001,7 @@ class App:
         self.tray = None
         self.recorder = None
         self.hotkeys = None
+        self._hotkey_lock = threading.Lock()
         self.last_clip = None
         self.public_url = ""
         self.public_host = ""
@@ -1089,12 +1090,15 @@ class App:
     # --- hotkeys
 
     def start_hotkeys(self):
-        if self.hotkeys:
-            self.hotkeys.stop()
-        items = [(h["keys"], (lambda secs=h["seconds"]: self.save_clip_from_hotkey(secs)))
-                 for h in self.settings["hotkeys"]]
-        self.hotkeys = winutil.Hotkeys(items)
-        self.hotkeys.start()
+        # one at a time: the old hotkeys must let go of the keys before the new ones take them
+        with self._hotkey_lock:
+            if self.hotkeys:
+                self.hotkeys.stop()
+            items = [(h["keys"], (lambda secs=h["seconds"]: self.save_clip_from_hotkey(secs)))
+                     for h in self.settings["hotkeys"]]
+            hk = winutil.Hotkeys(items)
+            hk.start()
+            self.hotkeys = hk
         if winutil.IS_WIN:
             for h in self.settings["hotkeys"]:
                 ok = self.hotkeys.ok.get(h["keys"])

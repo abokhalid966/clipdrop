@@ -1,8 +1,8 @@
 {
-  "version": "5.1",
-  "file": "ClipDrop-Setup-5.1.exe",
-  "size": 244215,
-  "sha256": "e7ff70d7853c301afa0673258086f0729b1f2b3987f788c68c1a586c20c00abc",
-  "notes_en": "**ClipDrop 5.1**\n- **Automatic updates.** ClipDrop now checks for new versions and updates itself with one tap. Your settings, clips and files stay.\n- New **Updates** section in Settings: check now, check automatically, or install automatically.\n- \"Check for updates\" in the tray menu.\n- Safety: every update is checked against its SHA-256 fingerprint before it installs.\n\nAlso in 5.0: file sharing between PC and phone, Arabic, and the new Settings page.",
-  "notes_ar": "**ClipDrop 5.1**\n- **تحديثات تلقائية.** ClipDrop صار يبحث عن النسخ الجديدة ويحدّث نفسه بضغطة وحدة. إعداداتك ومقاطعك وملفاتك تبقى.\n- قسم **التحديثات** الجديد في الإعدادات: ابحث الآن، أو البحث التلقائي، أو التثبيت التلقائي.\n- «البحث عن تحديثات» في قائمة الأيقونة جنب الساعة.\n- أمان: كل تحديث يتأكد من بصمته (SHA-256) قبل التثبيت.\n\nوفي 5.0: مشاركة الملفات بين الكمبيوتر والجوال، العربي، وصفحة الإعدادات الجديدة."
+  "version": "5.2",
+  "file": "ClipDrop-Setup-5.2.exe",
+  "size": 246227,
+  "sha256": "b63d0de54b4ab4b6722ff6fc4ba08f3f650d026b1a6b31a03a8f4dcf2c192251",
+  "notes_en": "**ClipDrop 5.2**\n- **Fixed:** after changing a hotkey or its length, the hotkey could stop working and show \"already used by another app\", even though ClipDrop itself was holding it.\n- If another app really is using your hotkey, ClipDrop now keeps trying and the hotkey starts working by itself as soon as the key is free.",
+  "notes_ar": "**ClipDrop 5.2**\n- **إصلاح:** بعد تغيير الاختصار أو مدته، كان الاختصار أحيانًا يوقف ويطلع «مستخدم من برنامج ثاني» مع إن ClipDrop نفسه هو اللي ماسكه.\n- إذا كان فيه برنامج ثاني فعلًا يستخدم اختصارك، ClipDrop يحاول مرة ثانية تلقائيًا ويشتغل الاختصار أول ما يفضى."
 }

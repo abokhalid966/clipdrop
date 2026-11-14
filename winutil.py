@@ -6,6 +6,7 @@ do nothing, so the rest of the app can still be tested.
 
 import sys
 import threading
+import time
 from pathlib import Path
 
 IS_WIN = sys.platform == "win32"
@@ -50,6 +51,7 @@ if IS_WIN:
     _sig(user32.ShowWindow, wintypes.BOOL, HW, ctypes.c_int)
     _sig(user32.UpdateWindow, wintypes.BOOL, HW)
     _sig(user32.SetTimer, ctypes.c_size_t, HW, ctypes.c_size_t, wintypes.UINT, ctypes.c_void_p)
+    _sig(user32.KillTimer, wintypes.BOOL, HW, ctypes.c_size_t)
     _sig(user32.SetLayeredWindowAttributes, wintypes.BOOL, HW, wintypes.DWORD, ctypes.c_ubyte, wintypes.DWORD)
     _sig(user32.SetWindowDisplayAffinity, wintypes.BOOL, HW, wintypes.DWORD)
     _sig(user32.UnregisterClassW, wintypes.BOOL, wintypes.LPCWSTR, H)
@@ -65,6 +67,7 @@ MODS = {"alt": 0x0001, "ctrl": 0x0002, "control": 0x0002, "shift": 0x0004, "win"
 NOREPEAT = 0x4000
 WM_HOTKEY = 0x0312
 WM_QUIT = 0x0012
+WM_TIMER = 0x0113
 
 # Programs that are never "the game"
 NOT_GAMES = {"explorer", "chrome", "msedge", "firefox", "opera", "brave", "discord", "steam",
@@ -103,11 +106,19 @@ def parse_hotkey(text):
 
 class Hotkeys:
     """Registers several hotkeys at once. `items` is a list of (text, callback).
-    They work even while a game has focus."""
+    They work even while a game has focus.
+
+    If a key can't be registered (another app holds it, or the previous set of
+    hotkeys is still letting go of it), it is tried again a few times right
+    away and then every few seconds, so it starts working on its own as soon
+    as the key is free."""
+
+    RETRY_MS = 5000
 
     def __init__(self, items):
         self.items = items
         self.thread_id = None
+        self.thread = None
         self.ok = {}      # text -> True/False
         self.errors = {}  # text -> message
 
@@ -118,35 +129,59 @@ class Hotkeys:
                 self.errors[text] = "Hotkeys only work on Windows"
             return
         ready = threading.Event()
-        threading.Thread(target=self._run, args=(ready,), daemon=True).start()
-        ready.wait(2)
+        self.thread = threading.Thread(target=self._run, args=(ready,), daemon=True)
+        self.thread.start()
+        ready.wait(3)
+
+    def _register(self, i, text, cb, callbacks, tries):
+        try:
+            mods, vk = parse_hotkey(text)
+        except ValueError as e:
+            self.ok[text], self.errors[text] = False, str(e)
+            return True   # not a real key: no point retrying
+        for n in range(tries):
+            if user32.RegisterHotKey(None, i, mods | NOREPEAT, vk):
+                self.ok[text], callbacks[i] = True, cb
+                self.errors.pop(text, None)
+                return True
+            if n + 1 < tries:
+                time.sleep(0.15)
+        self.ok[text] = False
+        self.errors[text] = f"{text} is already used by another app. Pick another one."
+        return False
 
     def _run(self, ready):
         self.thread_id = kernel32.GetCurrentThreadId()
-        callbacks = {}
+        callbacks, waiting = {}, {}
         for i, (text, cb) in enumerate(self.items, start=1):
-            try:
-                mods, vk = parse_hotkey(text)
-            except ValueError as e:
-                self.ok[text], self.errors[text] = False, str(e)
-                continue
-            if user32.RegisterHotKey(None, i, mods | NOREPEAT, vk):
-                self.ok[text] = True
-                callbacks[i] = cb
-            else:
-                self.ok[text] = False
-                self.errors[text] = f"{text} is already used by another app. Pick another one."
+            if not self._register(i, text, cb, callbacks, tries=8):
+                waiting[i] = (text, cb)
         ready.set()
+        timer = user32.SetTimer(None, 0, self.RETRY_MS, None) if waiting else 0
         msg = wintypes.MSG()
         while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
             if msg.message == WM_HOTKEY and msg.wParam in callbacks:
                 threading.Thread(target=callbacks[msg.wParam], daemon=True).start()
+            elif msg.message == WM_TIMER and waiting:
+                for i, (text, cb) in list(waiting.items()):
+                    if self._register(i, text, cb, callbacks, tries=1):
+                        waiting.pop(i)
+                        print(f"Hotkey {text}: ready")
+                if not waiting and timer:
+                    user32.KillTimer(None, timer)
+                    timer = 0
+        if timer:
+            user32.KillTimer(None, timer)
         for i in callbacks:
             user32.UnregisterHotKey(None, i)
 
     def stop(self):
+        """Lets go of the keys and waits until Windows has released them, so a
+        new set of hotkeys can take the same keys straight away."""
         if IS_WIN and self.thread_id:
             user32.PostThreadMessageW(self.thread_id, WM_QUIT, 0, 0)
+            if self.thread and self.thread is not threading.current_thread():
+                self.thread.join(3)
 
 
 # ------------------------------------------------------------------ monitors
