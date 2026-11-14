@@ -1,0 +1,165 @@
+<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f13">
+<link rel="apple-touch-icon" href="/icon180.png"><link rel="icon" href="/icon.png">
+<title>ClipDrop help</title>
+<style>
+:root{--bg:#0e0f13;--card:#171921;--line:#272a37;--text:#eceef4;--dim:#9a9fb0;--accent:#7cf29a;--gold:#ffd166}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 50px)}
+a{color:var(--accent)}a.back{text-decoration:none;font-size:15px}
+h1{font-size:26px;margin:12px 0 4px}h1 b{color:var(--accent)}
+.lead{color:var(--dim);margin:0 0 10px;font-size:15px}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
+nav a{font-size:13px;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:99px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0;scroll-margin-top:12px}
+h2{font-size:18px;margin:0 0 8px}
+h3{font-size:15px;margin:14px 0 4px}
+p{margin:6px 0;font-size:15px}
+ol,ul{margin:6px 0;padding-left:22px}li{margin:6px 0;font-size:15px}
+.dim{color:var(--dim);font-size:13.5px}
+kbd{background:#232634;border:1px solid #3a3e50;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-family:inherit;font-size:13px;font-weight:600;white-space:nowrap}
+code{background:#10121a;border:1px solid var(--line);border-radius:6px;padding:3px 7px;font-size:13px;word-break:break-all}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:12.5px}
+.tip{border-left:3px solid var(--gold);padding:6px 12px;background:rgba(255,209,102,.06);border-radius:0 8px 8px 0;margin:10px 0;font-size:14px}
+</style></head><body><div class="wrap">
+<a class="back" href="/">&#8592; Clips</a>
+<h1>How to use Clip<b>Drop</b></h1>
+<p class="lead">ClipDrop quietly keeps the last moments of your game. When something cool happens, press a key and it's saved. Then watch, edit and send it to your phone.</p>
+<nav><a href="#start">Getting started</a><a href="#clip">Saving clips</a><a href="#phone">Your phone</a><a href="#files">Sending files</a><a href="#photos">Auto-send to Photos</a><a href="#edit">Editing</a><a href="#organize">Organizing</a><a href="#formats">Video formats</a><a href="#settings">Settings</a><a href="#fix">Problems</a></nav>
+
+<div class="card" id="start"><h2>1. Getting started</h2>
+<ol>
+ <li>Run <b>ClipDrop-Setup.exe</b> once. It sets everything up and adds ClipDrop to your Start Menu (and Desktop if you want). If Windows says "Windows protected your PC", click <b>More info</b> then <b>Run anyway</b>.</li>
+ <li>ClipDrop lives by the clock (bottom right of the taskbar) as a small green icon. It may be hidden under the <b>^</b> arrow.</li>
+ <li>Right-click the icon for the menu: Open ClipDrop, Save clip now, Recording on/off, Connect phone, Open clips folder, Help, Quit.</li>
+ <li>If Windows asks about the firewall, tick <b>Private networks</b> and click Allow. That lets your phone reach your PC on your home Wi-Fi.</li>
+</ol>
+<div class="tip">ClipDrop never uploads anything. Your clips only travel between your PC and your phone on your own Wi-Fi.</div>
+</div>
+
+<div class="card" id="clip"><h2>2. Saving clips</h2>
+<p>While you play, press your hotkey. The default is <kbd>Ctrl</kbd> + <kbd>F9</kbd>, which saves the <b>last 30 seconds</b>.</p>
+<ul>
+ <li>You hear a short ding and see <b>Clip saved</b> in the top-right corner.</li>
+ <li>Want different lengths? Add more hotkeys in Settings, for example <kbd>Ctrl</kbd> + <kbd>F10</kbd> for the last 2 minutes.</li>
+ <li>On your phone, tap <b>Clip it</b> to save from there. With several lengths, it asks which one.</li>
+ <li>Clips are saved in <code>Videos\ClipDrop</code>, in a folder named after the game.</li>
+</ul>
+<p class="dim">The dot at the top of ClipDrop shows what's going on: red = recording, yellow = waiting for a game, grey = off.</p>
+</div>
+
+<div class="card" id="phone"><h2>3. Your phone</h2>
+<ol>
+ <li>Your phone and PC must be on the <b>same Wi-Fi</b>.</li>
+ <li>On the PC: right-click the ClipDrop icon → <b>Connect phone</b>. A QR code appears.</li>
+ <li>Point your iPhone camera at it and tap the link.</li>
+ <li>In Safari tap <b>Share</b> → <b>Add to Home Screen</b>. Now ClipDrop has its own icon and opens like an app.</li>
+</ol>
+<p>Your phone link: <code>__PHONE_URL__</code></p>
+<p class="dim">Keep this link private. Anyone on your Wi-Fi with it can see your clips. Android phones work too, except auto-send to Photos.</p>
+<h3>Saving a clip to your iPhone</h3>
+<p>Tap <b>Save</b>, then <b>Download</b>. The clip goes into the Files app. To put it in Photos: open Files → Downloads → tap the clip → Share → <b>Save Video</b>. Or set up auto-send below so it happens by itself.</p>
+</div>
+
+<div class="card" id="files"><h2>4. Sending files between PC and phone</h2>
+<p>Open the <b>Files</b> tab at the top of ClipDrop. It works both ways, with photos, videos, documents or any other file.</p>
+<h3>From your phone to the PC</h3>
+<ul>
+ <li>Tap <b>Send to PC</b> and pick photos, videos or files. A bar shows the progress.</li>
+ <li>On the PC they go to <code>Downloads\ClipDrop Shared\From (your phone's name)</code>, and a small message pops up.</li>
+ <li>For full-quality videos, set up <a href="/shortcut#sendpc">Send to PC in the share menu</a>. iPhone sometimes shrinks videos picked inside a web page.</li>
+</ul>
+<h3>From the PC to your phone</h3>
+<ul>
+ <li>Drag files into the ClipDrop window, or click <b>Send to phone</b>.</li>
+ <li>Or in Windows: right-click any file → <b>Send to</b> → <b>ClipDrop (send to phone)</b>. On Windows 11, click <b>Show more options</b> first.</li>
+ <li>On the phone, open the Files tab and tap <b>Save</b>. With auto-send on, photos and videos go straight into Photos.</li>
+</ul>
+<h3>Who sent what</h3>
+<p>Every file has a badge: 📱 <b>From iPhone</b> (or your phone's name) or 💻 <b>From PC</b>. Use the buttons under the search box to show only one side. You can name each phone in Settings → Files and sharing.</p>
+</div>
+
+<div class="card" id="photos"><h2>5. Auto-send to Photos (iPhone)</h2>
+<p>New clips can go straight into your Photos app without opening ClipDrop. Set it up once (about 3 minutes):</p>
+<p><a href="/shortcut">Open the step-by-step setup →</a></p>
+<ul>
+ <li>Best option: it runs every time you open the Photos app, so your clips are waiting for you.</li>
+ <li>Each clip is sent only once. Renaming a clip doesn't send it again.</li>
+ <li>To send older clips: tap <b>Select</b>, choose clips, then tap <b>Send to iPhone</b>. They arrive the next time the shortcut runs.</li>
+</ul>
+</div>
+
+<div class="card" id="edit"><h2>6. Watching and editing</h2>
+<p>Tap any clip to play it. Below the video:</p>
+<table>
+ <tr><th>Button</th><th>What it does</th></tr>
+ <tr><td><b>Rename</b></td><td>Give the clip a name you'll remember.</td></tr>
+ <tr><td><b>Edit</b></td><td>Drag the two handles over the picture strip. <b>Keep selection</b> keeps only that part. <b>Cut out selection</b> removes that part and joins the rest. If your mic was on, you can turn your voice and the game sound up or down separately. Saves an "(edited)" copy, or tick <i>Replace the original</i>.</td></tr>
+ <tr><td><b>Share size</b></td><td>Makes a small 720p copy (around 15 MB or less) that sends fast on WhatsApp or Snapchat. The original stays as it is.</td></tr>
+ <tr><td><b>Save</b></td><td>Downloads the full-quality clip.</td></tr>
+ <tr><td><b>★</b></td><td>Adds it to Favorites.</td></tr>
+ <tr><td><b>Delete</b></td><td>Deletes it from your PC for good.</td></tr>
+</table>
+</div>
+
+<div class="card" id="organize"><h2>7. Organizing clips</h2>
+<ul>
+ <li><b>Search</b> by name or game.</li>
+ <li><b>Sort</b> by newest, oldest, longest, shortest, biggest, smallest, name or game.</li>
+ <li><b>Filter</b> with the buttons under the search box: all clips, ★ Favorites, or one game.</li>
+ <li><b>Select</b> lets you pick many clips at once to favorite, send to your iPhone, or delete.</li>
+ <li>The bar at the top shows how much space your clips use and how much is left on the drive.</li>
+</ul>
+</div>
+
+<div class="card" id="formats"><h2>8. Which video format should I pick?</h2>
+<table>
+ <tr><th>Format</th><th>Pick it when</th><th>Good to know</th></tr>
+ <tr><td><b>H.264</b></td><td>You share clips a lot, or aren't sure.</td><td>Plays everywhere: every phone, WhatsApp, Discord, editors. Biggest files.</td></tr>
+ <tr><td><b>HEVC</b></td><td>You mostly watch on your iPhone and want smaller files.</td><td>Same quality at about half the size, so it also sends faster. Some Windows apps need the free "HEVC Video Extensions".</td></tr>
+ <tr><td><b>AV1</b></td><td>You have a new graphics card and keep clips on your PC.</td><td>Smallest files. Needs RTX 40 / RX 7000 / Intel Arc or newer to record, and iPhone 15 Pro or newer to play.</td></tr>
+</table>
+<p class="dim">Settings shows which formats your PC can record. "Share size" copies are always H.264, so they play everywhere.</p>
+</div>
+
+<div class="card" id="settings"><h2>9. Settings</h2>
+<p>Tap <b>⚙</b> at the top. Settings are grouped into sections (Recording, Video, Hotkeys, Sound, Alerts, Clips and games, Files and sharing, Phone, Updates, Language, App). Use the search box to find any option. Every option has a short explanation, and each section has a "Reset" button. The main ones:</p>
+<ul>
+ <li><b>When to record:</b> always, or only while a game is open.</li>
+ <li><b>What to record:</b> the whole screen, or only the game window so Discord pop-ups and notifications stay out.</li>
+ <li><b>Video:</b> format, quality, frames per second and size.</li>
+ <li><b>Hotkeys:</b> add as many as you like, each with its own length.</li>
+ <li><b>Sound:</b> pick which speakers and mic to record, and set their volume.</li>
+ <li><b>When a clip is saved:</b> turn the sound and the in-game message on or off.</li>
+ <li><b>Updates:</b> ClipDrop checks for new versions once a day. When one is ready, a blue bar appears at the top: tap <b>What's new</b>, then <b>Update now</b>. It closes for a few seconds and opens again, and your settings, clips and files stay. You can also let updates install by themselves.</li>
+ <li><b>Language:</b> English or Arabic. "Automatic" uses each device's own language.</li>
+ <li><b>Games:</b> ClipDrop counts any program that fills the whole screen as a game. You can add games it misses (like one you play in a window), or list programs that aren't games.</li>
+</ul>
+<p><a href="/#settings">Open Settings →</a></p>
+</div>
+
+<div class="card" id="fix"><h2>10. If something doesn't work</h2>
+<h3>My phone can't connect</h3>
+<ul><li>Make sure ClipDrop is running (icon by the clock) and both are on the same Wi-Fi.</li>
+<li>Allow ClipDrop through the Windows firewall on Private networks: Start → "Allow an app through Windows Firewall" → tick <b>Private</b> for pythonw.</li>
+<li>If your router restarted, your PC's address may have changed. Right-click the icon → Connect phone and scan the new QR code.</li></ul>
+<h3>The hotkey does nothing</h3>
+<ul><li>Another app may already use that key. Settings shows a red message under the hotkey if so. Pick a different one.</li>
+<li>If recording is set to "Only while I'm gaming", ClipDrop only saves when a game is open.</li></ul>
+<h3>The game isn't detected</h3>
+<ul><li>Games in a window (not fullscreen) aren't detected on their own. Add the game's program name under Settings → Clips and games → <b>Always count these as games</b>.</li></ul>
+<h3>A file won't send</h3>
+<ul><li>Keep the phone screen on and the page open until the bar finishes. Big videos take a while on Wi-Fi.</li>
+<li>Check there's free space on the PC (the bar at the top of Clips shows it).</li></ul>
+<h3>Clips have no sound</h3>
+<ul><li>Check Settings → Sound. Pick the speakers or headset you actually listen with, not "Windows default".</li></ul>
+<h3>Clips are black</h3>
+<ul><li>Switch "What to record" to <b>Whole screen</b>, and set the game to borderless or windowed mode.</li></ul>
+<h3>Still stuck?</h3>
+<p>Right-click the icon → Quit, then open Start → ClipDrop → <b>ClipDrop (show messages)</b>. It shows messages explaining what's wrong. The log file is at <code>%LOCALAPPDATA%\ClipDrop\clipdrop.log</code>.</p>
+</div>
+</div></body></html>

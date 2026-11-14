@@ -1,0 +1,145 @@
+<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f13">
+<link rel="apple-touch-icon" href="/icon180.png">
+<title>iPhone shortcuts</title>
+<style>
+:root{--bg:#0e0f13;--card:#171921;--line:#272a37;--text:#eceef4;--dim:#9a9fb0;--accent:#7cf29a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 40px)}
+a.back{color:var(--accent);text-decoration:none;font-size:15px}
+h1{font-size:24px;margin:12px 0 4px}
+.lead{color:var(--dim);margin:0 0 18px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+h2{font-size:17px;margin:0 0 10px}
+ol{margin:0;padding-left:22px}
+li{margin:10px 0;font-size:15px}
+li small{display:block;color:var(--dim);font-size:13px}
+b.a{background:#232634;border:1px solid var(--line);padding:1px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+.link{display:flex;gap:8px;margin-top:10px}
+.link input{flex:1;min-width:0;background:#10121a;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font-size:13px}
+.link button{flex:none;background:var(--accent);color:#0e0f13;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:15px}
+.note{font-size:13px;color:var(--dim)}
+.opt{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.opt:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.jump a{font-size:14px;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);padding:8px 12px;border-radius:99px}
+.tag{display:inline-block;background:var(--accent);color:#0e0f13;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;margin-left:6px;vertical-align:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="/">&#8592; ClipDrop</a>
+<h1>iPhone shortcuts</h1>
+<p class="lead">Two optional shortcuts. Each takes a few minutes to set up once.</p>
+<nav class="jump"><a href="#auto">📥 Auto-send to Photos</a><a href="#sendpc">📤 Send to PC from the share menu</a></nav>
+<h1 id="auto" style="font-size:20px;margin-top:22px">📥 Auto-send to Photos</h1>
+<p class="lead">New clips (and photos or videos you send from the PC) go straight into your Photos app without opening ClipDrop.</p>
+
+<div class="card">
+ <h2>Your link</h2>
+ <div class="note">You paste this while making the shortcut. Keep it private: anyone with it on your Wi-Fi can get your clips.</div>
+ <div class="link"><input id="lnk" readonly value="__INBOX__"><button class="cp" data-for="lnk">Copy</button></div>
+</div>
+
+<div class="card">
+ <h2>1. Make the shortcut</h2>
+ <ol>
+  <li>Open the <b>Shortcuts</b> app and tap <b class="a">+</b> at the top right.</li>
+  <li>Tap the name at the top and call it <b>Get Clips</b>.</li>
+  <li>Tap <b>Search Actions</b>, type <b>URL</b>, and tap <b class="a">URL</b>. Tap the blue text in it and <b>paste your link</b>.</li>
+  <li>Search for <b class="a">Get Contents of URL</b> and tap it.</li>
+  <li>Search for <b class="a">Get Dictionary Value</b> and tap it. Tap <b>Key</b> and type <b>clips</b>.
+   <small>It should read: Get Value for clips in Contents of URL.</small></li>
+  <li>Search for <b class="a">Repeat with Each</b> and tap it.</li>
+  <li>Search for <b class="a">Get Contents of URL</b> again and tap it. It goes <b>inside</b> the Repeat.
+   <small>It should read: Get contents of Repeat Item. If it doesn't, tap the blue part and choose Repeat Item.</small></li>
+  <li>Search for <b class="a">Save to Photo Album</b> and tap it. It also goes inside the Repeat, under the last step.</li>
+  <li>Tap <b>Done</b>.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>2. Try it</h2>
+ <ol>
+  <li>Tap <b>Get Clips</b> once. Allow everything it asks: <b>local network</b>, connecting to your PC (<b>Always Allow</b>), and <b>Photos</b>.
+   <small>The first run only remembers the clips you already have, so nothing is saved yet. That's normal.</small></li>
+  <li>Save a new clip on your PC (Ctrl+F9) and wait a few seconds.</li>
+  <li>Tap <b>Get Clips</b> again. The clip should now be in Photos.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>3. Make it automatic</h2>
+ <div class="opt"><b>When you open Photos</b><span class="tag">best</span>
+  <ol>
+   <li>In Shortcuts, tap <b>Automation</b> at the bottom, then <b class="a">+</b> (or New Automation).</li>
+   <li>Choose <b>App</b>, pick <b>Photos</b>, and tick <b>Is Opened</b>.</li>
+   <li>Choose <b>Run Immediately</b>, tap Next, and pick <b>Get Clips</b>.</li>
+  </ol>
+  <div class="note">Open Photos after gaming and your new clips show up a few seconds later.</div>
+ </div>
+ <div class="opt"><b>Tap the back of your iPhone</b>
+  <ol><li>Settings &#8594; Accessibility &#8594; Touch &#8594; <b>Back Tap</b> &#8594; Double Tap &#8594; pick <b>Get Clips</b>.</li></ol>
+ </div>
+ <div class="opt"><b>When you get home</b>
+  <ol><li>New Automation &#8594; <b>Wi-Fi</b> &#8594; pick your home Wi-Fi &#8594; Run Immediately &#8594; <b>Get Clips</b>.</li></ol>
+  <div class="note">This only runs when your phone joins the Wi-Fi, not while it's already connected.</div>
+ </div>
+ <div class="opt"><b>Home Screen button</b>
+  <ol><li>In Shortcuts, press and hold <b>Get Clips</b> &#8594; Share &#8594; <b>Add to Home Screen</b>.</li></ol>
+ </div>
+</div>
+
+<div class="card">
+ <h2>If it doesn't work</h2>
+ <ol>
+  <li>ClipDrop has to be running on your PC, and your phone has to be on the same Wi-Fi.</li>
+  <li>If your PC's address changes (after a router restart), open this page again, copy the new link, and paste it into the URL step of the shortcut.</li>
+  <li>Settings &#8594; Privacy &amp; Security &#8594; <b>Local Network</b> &#8594; make sure <b>Shortcuts</b> is on.</li>
+ </ol>
+</div>
+
+<h1 id="sendpc" style="font-size:20px;margin-top:34px">📤 Send to PC from the share menu</h1>
+<p class="lead">Adds <b>Send to PC</b> to the share menu in Photos, Files and other apps. It sends the original file in full quality. (Picking photos inside ClipDrop works too, but iPhone may shrink videos chosen that way.)</p>
+
+<div class="card">
+ <h2>Your upload link</h2>
+ <div class="note">You paste this while making the shortcut. The end of the link (device=iPhone) is the name shown on your PC. You can change it.</div>
+ <div class="link"><input id="up" readonly value="__UPLOAD__"><button class="cp" data-for="up">Copy</button></div>
+</div>
+
+<div class="card">
+ <h2>1. Make the shortcut</h2>
+ <ol>
+  <li>In <b>Shortcuts</b> tap <b class="a">+</b> and name it <b>Send to PC</b>.</li>
+  <li>Tap <b class="a">ⓘ</b> at the bottom and turn on <b>Show in Share Sheet</b>. Tap Done.
+   <small>At the top, the shortcut now says "Receive Images and more from Share Sheet". That's right.</small></li>
+  <li>Search for <b class="a">Repeat with Each</b> and tap it. It should say: Repeat with each item in <b>Shortcut Input</b>.</li>
+  <li>Search for <b class="a">Get Contents of URL</b> and tap it. It goes <b>inside</b> the Repeat.</li>
+  <li>Tap the blue <b>URL</b> in it and <b>paste your upload link</b>.</li>
+  <li>Tap the arrow <b class="a">&#8250;</b> to show more options:
+   <small>Method: <b>POST</b> · Request Body: <b>File</b> · File: <b>Repeat Item</b></small></li>
+  <li>Tap <b>Done</b>.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>2. Use it</h2>
+ <ol>
+  <li>In Photos, select one or more photos or videos and tap <b>Share</b>.</li>
+  <li>Scroll down and tap <b>Send to PC</b>. The first time, allow it to connect to your PC (<b>Always Allow</b>).</li>
+  <li>They appear in ClipDrop's <b>Files</b> tab marked <b>From iPhone</b>, and in <code>Downloads\ClipDrop Shared</code> on the PC.</li>
+ </ol>
+ <div class="note">Big videos take a moment. Keep the phone awake until it finishes.</div>
+</div>
+</div>
+<script>
+document.querySelectorAll(".cp").forEach(function(btn){btn.onclick=function(){
+ var i=document.getElementById(btn.dataset.for),b=btn;
+ i.focus();i.setSelectionRange(0,i.value.length);
+ var ok=false;try{ok=document.execCommand("copy")}catch(e){}
+ if(!ok&&navigator.clipboard){navigator.clipboard.writeText(i.value).then(function(){b.textContent="Copied"});return}
+ b.textContent=ok?"Copied":"Select & copy";
+ setTimeout(function(){b.textContent="Copy"},2000);
+}});
+</script>
+</body></html>

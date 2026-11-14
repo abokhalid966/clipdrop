@@ -1,0 +1,1111 @@
+<!doctype html><html lang="__LANG__" dir="__DIR__"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ClipDrop">
+<meta name="theme-color" content="#0e0f13">
+<link rel="apple-touch-icon" href="/icon180.png">
+<link rel="icon" href="/icon.png">
+<title>ClipDrop</title>
+<script>window.CD_LANG="__LANG__"</script>
+<script src="/i18n.js"></script>
+<style>
+:root{--bg:#0e0f13;--card:#171921;--card2:#1d2029;--field:#0d0f15;--line:#272a37;--text:#eceef4;--dim:#8d92a3;--accent:#7cf29a;--blue:#6cb8ff;--red:#ff6b6b;--gold:#ffd166}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:none;padding:0;cursor:pointer}
+a{color:var(--accent)}
+/* ---------- header */
+header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:8px}
+h1{margin:0;font-size:20px;flex:1;white-space:nowrap}h1 b{color:var(--accent)}
+.pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:5px 10px;border-radius:99px;max-width:46vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:#555a6b;flex:none}
+.dot.rec{background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 1.6s infinite}
+.dot.wait{background:var(--gold)}
+@keyframes pulse{50%{opacity:.4}}
+.icon{font-size:19px;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--dim);text-decoration:none;flex:none}
+.icon:hover{background:var(--card)}
+.tabs{display:flex;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;margin-top:10px}
+.tabs button{flex:1;padding:8px;border-radius:9px;font-size:14px;color:var(--dim);font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.tabs button.on{background:var(--card2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.tabs .cnt{background:var(--blue);color:#0e0f13;font-size:11px;font-weight:800;border-radius:99px;padding:1px 7px;display:none}
+.tabs .cnt.show{display:inline-block}
+.tools{display:flex;gap:8px;margin-top:10px}
+.search{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;outline:none}
+.search:focus{border-color:#3b4052}
+.sel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 8px;font-size:14px;color:var(--text);max-width:40vw}
+.tbtn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;white-space:nowrap}
+.tbtn.on{background:var(--accent);color:#0e0f13;border-color:var(--accent);font-weight:600}
+.row{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none}.row::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--dim);padding:6px 12px;border-radius:99px;font-size:13px}
+.chip.on{color:#0e0f13;background:var(--accent);border-color:var(--accent);font-weight:600}
+.storage{margin-top:10px;font-size:12px;color:var(--dim);display:flex;align-items:center;gap:10px}
+.sbar{flex:1;height:6px;border-radius:3px;background:var(--card2);overflow:hidden;max-width:260px}
+.sbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.sbar i.warn{background:var(--gold)}.sbar i.full{background:var(--red)}
+.hide{display:none!important}
+/* ---------- grid */
+main{padding:14px 16px calc(env(safe-area-inset-bottom) + 110px);display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.card.picked{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.media{position:relative;aspect-ratio:16/9;background:#000;width:100%;display:block}
+.media img{width:100%;height:100%;object-fit:cover;display:block}
+.play{position:absolute;inset:0;display:grid;place-items:center}
+.play span{width:50px;height:50px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center}
+.play span:after{content:"";border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:5px}
+.badge{position:absolute;bottom:8px;inset-inline-end:8px;background:rgba(0,0,0,.7);font-size:12px;padding:2px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+.new{position:absolute;top:8px;inset-inline-start:8px;background:var(--accent);color:#0e0f13;font-weight:700;font-size:11px;padding:3px 7px;border-radius:6px}
+.check{position:absolute;top:8px;inset-inline-start:8px;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.45);display:none;place-items:center;font-weight:800;color:#0e0f13;font-size:15px;z-index:2}
+.selecting .check{display:grid}.selecting .new{display:none}
+.card.picked .check{background:var(--accent);border-color:var(--accent)}
+.info{padding:10px 12px;display:flex;align-items:center;gap:8px}
+.meta{flex:1;min-width:0}
+.title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.star{font-size:20px;color:#4a4f60;width:34px;height:34px;display:grid;place-items:center;flex:none}
+.star.on{color:var(--gold)}
+.ibtn{flex:none;border:1px solid var(--line);padding:7px 11px;border-radius:10px;font-size:13px;text-decoration:none;color:var(--text)}
+.empty{grid-column:1/-1;text-align:center;color:var(--dim);padding:60px 10px;line-height:1.7}
+/* files */
+.ficon{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:46px;line-height:1;background:linear-gradient(135deg,#1b1e29,#12141b)}
+.ficon small{display:block;font-size:12px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.from{position:absolute;top:8px;inset-inline-end:8px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;display:flex;align-items:center;gap:4px;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1}
+.from.phone{background:rgba(108,184,255,.92);color:#08121f}
+.from.pc{background:rgba(124,242,154,.92);color:#08170e}
+.drop{position:fixed;inset:0;z-index:50;background:rgba(14,15,19,.88);display:none;place-items:center;pointer-events:none}
+.drop.show{display:grid}
+.drop div{border:3px dashed var(--accent);border-radius:24px;padding:50px 60px;text-align:center;font-size:22px;font-weight:700}
+.drop small{display:block;font-size:14px;color:var(--dim);font-weight:400;margin-top:8px}
+.upq{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:24;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none;max-height:45vh;overflow:auto}
+.upq.show{display:block}
+@media(min-width:760px){.upq{left:auto;right:20px;width:420px}[dir=rtl] .upq{right:auto;left:20px}}
+.upq h4{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.upi{font-size:13px;margin:8px 0}
+.upi .n{display:flex;justify-content:space-between;gap:8px}.upi .n span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upi .pb{height:5px;background:#10121a;border-radius:3px;margin-top:5px;overflow:hidden}.upi .pb i{display:block;height:100%;width:0;background:var(--blue);transition:width .2s}
+.upi.ok .pb i{background:var(--accent)}.upi.err .pb i{background:var(--red)}
+/* ---------- floating */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:6;background:var(--accent);color:#0e0f13;font-weight:700;font-size:16px;padding:11px 26px;border-radius:99px;box-shadow:0 6px 24px rgba(124,242,154,.35);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.fab svg{width:20px;height:20px}.fab.busy{opacity:.6;pointer-events:none}
+.fab.blue{background:var(--blue);box-shadow:0 6px 24px rgba(108,184,255,.35)}
+.lens{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:7;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:6px;display:none;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.lens.open{display:flex}
+.lens button{padding:9px 14px;border-radius:10px;background:var(--card);font-size:14px;white-space:nowrap}
+.actionbar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:8;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:10px;display:none;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.actionbar.open{display:flex}
+.actionbar .n{flex:1;font-size:14px;font-weight:600;min-width:90px}
+.actionbar button{padding:9px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:13px}
+.actionbar button.danger{color:var(--red);border-color:rgba(255,107,107,.5)}
+@media(min-width:760px){.actionbar{left:50%;right:auto;transform:translateX(-50%);min-width:640px}}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%) translateY(160px);background:#fff;color:#111;font-weight:600;padding:10px 18px;border-radius:99px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red);color:#fff}
+.pop{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:25;background:#1f2230;border:1px solid var(--accent);border-radius:16px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);transform:translateY(calc(100% + 140px));visibility:hidden;transition:transform .3s,visibility 0s .3s}
+.pop.show{transform:none;visibility:visible;transition:transform .3s}
+.pop img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#000;flex:none}
+.pop .pm{flex:1;min-width:0}.pop .pt{font-size:12px;color:var(--accent);font-weight:700}
+.pop .pn{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop .pa{display:flex;gap:6px;margin-top:6px}
+.pop .pa a,.pop .pa button{font-size:13px;padding:6px 12px;border-radius:9px;border:1px solid var(--line);color:var(--text);text-decoration:none}
+.pop .pa a.save{background:var(--accent);color:#0e0f13;border-color:var(--accent);font-weight:700}
+.pop .px{align-self:flex-start;color:var(--dim);font-size:18px;padding:0 4px}
+@media(min-width:760px){.pop{left:auto;right:20px;width:420px}[dir=rtl] .pop{right:auto;left:20px}}
+/* ---------- sheets */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none}
+.sheet.open{display:block}
+.panel{position:absolute;left:0;right:0;bottom:0;max-height:94vh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 18px);-webkit-overflow-scrolling:touch}
+@media(min-width:760px){.panel{max-width:620px;left:50%;transform:translateX(-50%);border-radius:18px;bottom:3vh;max-height:94vh}#player .panel,#fview .panel{max-width:980px}}
+.btn{display:block;width:100%;text-align:center;background:var(--accent);color:#0e0f13;font-weight:700;font-size:16px;padding:13px;border-radius:12px;margin-top:14px;text-decoration:none}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--text);font-weight:500}
+.btn.danger{background:none;border:1px solid var(--red);color:var(--red);font-weight:600}
+.btn:disabled{opacity:.6}
+/* player */
+#player .panel,#fview .panel{padding:0 0 calc(env(safe-area-inset-bottom) + 14px)}
+#pv{width:100%;aspect-ratio:16/9;background:#000;display:block;max-height:62vh}
+.fbig{width:100%;max-height:64vh;background:#000;display:grid;place-items:center;min-height:180px}
+.fbig img,.fbig video{max-width:100%;max-height:64vh;display:block}
+.fbig audio{width:90%;margin:40px 0}
+.fbig .ficon{position:static;background:none;padding:40px 0;font-size:80px}
+.pbody{padding:12px 16px 0}
+.ptop{display:flex;align-items:center;gap:8px}
+.prow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.prow .btn{margin-top:0;font-size:14px;padding:11px 4px;flex:1;min-width:70px}
+.tip{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.5}
+.trimbox,.sharebox{margin-top:12px;display:none}.trimbox.open,.sharebox.open{display:block}
+.sharebox{padding:12px;border:1px solid var(--line);border-radius:12px;font-size:14px}
+.tl{position:relative;height:44px;margin:6px 2px 2px}
+.tl .strip{position:absolute;left:0;right:0;top:0;height:44px;border-radius:8px;background-size:100% 100%;background-color:#1c1f2a;opacity:.55}
+.tl .selr{position:absolute;top:0;height:44px;border-radius:8px;background:rgba(124,242,154,.25);border:2px solid var(--accent)}
+.tl.cut .selr{background:rgba(255,107,107,.3);border-color:var(--red)}
+.tl input[type=range]{position:absolute;left:0;right:0;top:0;width:100%;height:44px;margin:0;appearance:none;-webkit-appearance:none;background:none;pointer-events:none}
+.tl input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:26px;height:34px;border-radius:9px;background:#fff;border:3px solid var(--accent);pointer-events:auto;cursor:ew-resize}
+.tl input[type=range]::-moz-range-thumb{width:20px;height:30px;border-radius:9px;background:#fff;border:3px solid var(--accent);pointer-events:auto}
+.ttimes{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}.ttimes b{color:var(--accent)}
+.seg{display:flex;background:#10121a;border:1px solid var(--line);border-radius:10px;padding:3px;margin:12px 0}
+.seg button{flex:1;padding:8px;border-radius:8px;font-size:14px;color:var(--dim)}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.vol{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0}
+.vol span:first-child{width:62px;color:var(--dim)}.vol input{flex:1;accent-color:var(--accent)}
+.vol b{width:46px;text-align:end;font-weight:500;font-variant-numeric:tabular-nums}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--dim);margin-top:10px}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+/* update banner + sheet */
+.upbar{margin-top:10px;display:flex;align-items:center;gap:10px;background:rgba(108,184,255,.12);border:1px solid rgba(108,184,255,.45);border-radius:12px;padding:8px 12px;font-size:14px}
+.upbar b{flex:1;font-weight:600}
+.upbar button{background:var(--blue);color:#08121f;font-weight:700;border-radius:9px;padding:7px 12px;font-size:13px;white-space:nowrap}
+.notes{font-size:14.5px;line-height:1.6;margin:10px 0;color:var(--text)}
+.notes ul{margin:6px 0;padding-inline-start:20px}.notes li{margin:4px 0}
+.uppb{height:8px;background:#10121a;border-radius:4px;overflow:hidden;margin-top:14px}.uppb i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
+.upmsg{font-size:13.5px;color:var(--dim);margin-top:8px}
+.upmsg.err{color:var(--red)}
+.vrow{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.vrow button{border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:14px;white-space:nowrap}
+
+/* ---------- settings (full screen, categories) */
+#settings{background:var(--bg);z-index:30}
+.spage{position:absolute;inset:0;display:flex}
+.snav{width:100%;overflow:auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 120px;-webkit-overflow-scrolling:touch}
+.sbody{display:none;width:100%;overflow:auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 130px;-webkit-overflow-scrolling:touch}
+.spage.incat .snav{display:none}.spage.incat .sbody{display:block}
+@media(min-width:860px){
+ .snav{width:310px;flex:none;border-inline-end:1px solid var(--line);background:#111319;display:block!important}
+ .sbody{display:block;flex:1;padding:28px 36px 130px}
+ .sbody .inner{max-width:720px}
+ .back{display:none!important}
+}
+.shead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.shead h2{margin:0;font-size:24px;flex:1}
+.ssearch{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px;outline:none;margin-bottom:12px}
+.ssearch:focus{border-color:#3b4052}
+.catbtn{display:flex;align-items:center;gap:12px;width:100%;text-align:start;padding:11px 12px;border-radius:14px;margin-bottom:4px}
+.catbtn:hover{background:var(--card)}
+.catbtn.on{background:var(--card2);box-shadow:inset 3px 0 0 var(--accent)}
+[dir=rtl] .catbtn.on{box-shadow:inset -3px 0 0 var(--accent)}
+.catbtn .ci{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex:none;background:var(--card2)}
+.catbtn .ct{flex:1;min-width:0}.catbtn b{display:block;font-size:15px;font-weight:600}
+.catbtn small{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catbtn .chev{color:var(--dim);font-size:20px}
+@media(min-width:860px){.catbtn .chev{display:none}}
+.sver{font-size:12px;color:var(--dim);padding:14px 12px;line-height:1.6}
+.back{font-size:15px;color:var(--accent);padding:6px 0;display:flex;align-items:center;gap:4px}
+.cat{display:none}.cat.on{display:block}
+.searching .cat{display:block}.searching .cat .item.nomatch{display:none}.searching .cat.nomatch{display:none}
+.cathead{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+.cathead .ci{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:24px;background:var(--card2)}
+.cathead h3{margin:0;font-size:22px}.cathead p{margin:3px 0 0;font-size:13.5px;color:var(--dim)}
+.searching .cathead{margin-top:24px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:2px 16px;margin-bottom:14px}
+.box>h4{margin:14px 0 2px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.item{padding:14px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.lbl{font-size:15px;font-weight:500;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.help{font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.5}
+.item select,.item input[type=text],.item textarea{width:100%;margin-top:9px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 11px;font-size:15px;color:var(--text);outline:none}
+.item select:focus,.item input[type=text]:focus,.item textarea:focus{border-color:#3b4052}
+.item textarea{min-height:58px;resize:vertical}
+.ltr{direction:ltr;text-align:left}
+.sw{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:#33364a;position:relative;transition:.2s;flex:none;cursor:pointer;margin:0}
+.sw:checked{background:var(--accent)}
+.sw:before{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw:checked:before{transform:translateX(20px)}
+.choices{display:grid;gap:8px;margin-top:9px}
+.choice{display:block;border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;background:var(--field);position:relative}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice b{font-size:15px;font-weight:600}
+.choice .help{margin-top:3px}
+.choice.on{border-color:var(--accent);background:rgba(124,242,154,.07)}
+.choice.on:after{content:"✓";position:absolute;top:10px;inset-inline-end:12px;color:var(--accent);font-weight:800}
+.choice.off{opacity:.45;cursor:not-allowed}
+.tagok,.tagno{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin-inline-start:6px;vertical-align:2px}
+.tagok{background:rgba(124,242,154,.15);color:var(--accent)}
+.tagno{background:rgba(255,107,107,.15);color:var(--red)}
+.hkrow{display:flex;gap:8px;margin-top:9px;align-items:center}
+.hkrow input{flex:1;min-width:0;margin-top:0!important;direction:ltr}
+.hkrow select{width:auto!important;margin-top:0!important}
+.hkrow .rm{color:var(--red);font-size:20px;width:30px}
+.hkrow .rec{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px 8px;white-space:nowrap}
+.hkrow .rec.on{border-color:var(--gold);color:var(--gold)}
+.hkerr{font-size:12px;color:var(--red);margin-top:4px}
+.add{margin-top:10px;font-size:14px;color:var(--accent);padding:6px 0}
+.rng{display:flex;align-items:center;gap:10px;margin-top:9px}
+.rng input{flex:1;accent-color:var(--accent)}.rng b{width:46px;text-align:end;font-weight:500}
+.rng span{font-size:12.5px;color:var(--dim);width:60px}
+.linkrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--text);text-decoration:none;width:100%;text-align:start}
+.linkrow:last-child{border-bottom:none}.linkrow>span:last-child{color:var(--accent);white-space:nowrap}
+.linkrow small{display:block;color:var(--dim);font-size:12.5px;margin-top:3px}
+.codebox{display:flex;gap:8px;margin-top:9px}
+.codebox code{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:left}
+.codebox button{border:1px solid var(--line);border-radius:10px;padding:0 14px;font-size:13px}
+.reset{font-size:13px;color:var(--dim);padding:8px 2px;text-decoration:underline}
+.searching .reset{display:none}
+.nores{color:var(--dim);text-align:center;padding:40px 0;display:none}
+.searching.none .nores{display:block}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:31;padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);background:rgba(23,25,33,.97);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;transform:translateY(110%);transition:transform .25s}
+.savebar.show{transform:none}
+.savebar span{flex:1;font-size:14px;color:var(--gold)}
+.savebar .btn{margin-top:0;width:auto;padding:11px 22px;font-size:15px}
+</style></head><body>
+
+<header>
+ <div class="bar">
+  <h1>Clip<b>Drop</b></h1>
+  <div class="pill" id="pill"><span class="dot" id="dot"></span><span id="sttxt">…</span></div>
+  <a class="icon" href="/help" title="Help" aria-label="Help">?</a>
+  <button class="icon" id="gear" title="Settings" aria-label="Settings">&#9881;&#65039;</button>
+ </div>
+ <div class="tabs" id="tabs"><button data-tab="clips" class="on">🎬 <span>Clips</span></button><button data-tab="files">📁 <span>Files</span><span class="cnt" id="fcnt"></span></button></div>
+ <div class="upbar hide" id="upbar"><span>🔄</span><b id="upbart"></b><button id="upbarb">What's new</button></div>
+ <!-- clips tools -->
+ <div id="ctools">
+  <div class="tools">
+   <input class="search" id="q" type="search" placeholder="Search clips" autocomplete="off">
+   <select class="sel" id="sort" aria-label="Sort">
+    <option value="new">Newest</option><option value="old">Oldest</option>
+    <option value="long">Longest</option><option value="short">Shortest</option>
+    <option value="big">Biggest</option><option value="small">Smallest</option>
+    <option value="az">Name A–Z</option><option value="game">By game</option>
+   </select>
+   <button class="tbtn" id="selbtn">Select</button>
+  </div>
+  <div class="row" id="games"></div>
+  <div class="storage" id="storage"></div>
+ </div>
+ <!-- files tools -->
+ <div id="ftools" class="hide">
+  <div class="tools">
+   <input class="search" id="fq" type="search" placeholder="Search files" autocomplete="off">
+   <select class="sel" id="fsort" aria-label="Sort">
+    <option value="new">Newest</option><option value="old">Oldest</option>
+    <option value="big">Biggest</option><option value="small">Smallest</option>
+    <option value="az">Name A–Z</option>
+   </select>
+   <button class="tbtn" id="fselbtn">Select</button>
+  </div>
+  <div class="row" id="fchips"></div>
+ </div>
+</header>
+
+<main id="list"><div class="empty">Loading clips…</div></main>
+<main id="flist" class="hide"></main>
+
+<div class="lens" id="lens"></div>
+<button class="fab" id="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/></svg><span>Clip it</span></button>
+<button class="fab blue hide" id="ffab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span id="ffabt"></span></button>
+<input type="file" id="fpick" multiple hidden>
+
+<div class="actionbar" id="actionbar">
+ <span class="n" id="seln"></span>
+ <button id="b_all">All</button>
+ <button id="b_fav" data-for="clips">&#9733; Favorite</button>
+ <button id="b_unfav" data-for="clips">Unfavorite</button>
+ <button id="b_send" title="Your iPhone saves them next time the Get Clips shortcut runs">Send to iPhone Photos</button>
+ <button id="b_del" class="danger">Delete</button>
+ <button id="b_cancel">Done</button>
+</div>
+
+<div class="drop" id="drop"><div>⬆ <span>Drop files to send to your phone</span><small>They show up in Files on your phone.</small></div></div>
+<div class="upq" id="upq"><h4><span id="upqt"></span><button id="upqx" class="icon" style="width:28px;height:28px;font-size:15px" aria-label="Close">&#10005;</button></h4><div id="upql"></div></div>
+
+<div class="toast" id="toast"></div>
+<div class="pop" id="pop"><img id="popimg" alt=""><div class="pm"><div class="pt">NEW CLIP</div><div class="pn" id="popname"></div>
+ <div class="pa"><a class="save" id="popsave">Save</a><button id="popwatch">Watch</button></div></div><button class="px" id="popx" aria-label="Close">&#10005;</button></div>
+
+<!-- ================= clip player ================= -->
+<div class="sheet" id="player"><div class="panel">
+ <video id="pv" controls playsinline></video>
+ <div class="pbody">
+  <div class="ptop"><div class="meta"><div class="title" id="ptitle" style="font-size:16px"></div><div class="sub" id="psub"></div></div>
+   <button class="star" id="pstar" aria-label="Favorite">&#9733;</button></div>
+  <div class="prow">
+   <button class="btn ghost" id="brename">Rename</button>
+   <button class="btn ghost" id="btrim">Edit</button>
+   <button class="btn ghost" id="bshare">Share size</button>
+   <a class="btn ghost" id="bsave">Save</a>
+   <button class="btn ghost pconly" id="bfolder">Show in folder</button>
+  </div>
+  <div class="sharebox" id="sharebox"></div>
+  <div class="trimbox" id="trimbox">
+   <div class="seg" id="mode"><button data-m="keep" class="on">Keep selection</button><button data-m="cut">Cut out selection</button></div>
+   <div class="tl" id="tl" dir="ltr"><div class="strip" id="tstrip"></div><div class="selr" id="tsel"></div>
+    <input type="range" id="t0" min="0" max="100" step="0.05" value="0"><input type="range" id="t1" min="0" max="100" step="0.05" value="100"></div>
+   <div class="ttimes" dir="ltr"><span id="tt0">0:00</span><b id="ttlen"></b><span id="tt1">0:00</span></div>
+   <div id="vols"></div>
+   <label class="chk"><input type="checkbox" id="replace"><span>Replace the original (no copy)</span></label>
+   <button class="btn" id="btrimgo">Save edited copy</button>
+  </div>
+  <div class="prow"><button class="btn danger" id="bdelete">Delete</button><button class="btn ghost" id="bclose">Close</button></div>
+ </div>
+</div></div>
+
+<!-- ================= file viewer ================= -->
+<div class="sheet" id="fview"><div class="panel">
+ <div class="fbig" id="fbig"></div>
+ <div class="pbody">
+  <div class="ptop"><div class="meta"><div class="title" id="ftitle" style="font-size:16px"></div><div class="sub" id="fsub"></div></div></div>
+  <div class="prow">
+   <a class="btn" id="fsave">Save</a>
+   <button class="btn ghost" id="frename">Rename</button>
+   <button class="btn ghost pconly" id="ffolder">Show in folder</button>
+  </div>
+  <div class="tip" id="ftip"></div>
+  <div class="prow"><button class="btn danger" id="fdelete">Delete</button><button class="btn ghost" id="fclose">Close</button></div>
+ </div>
+</div></div>
+
+<!-- ================= update ================= -->
+<div class="sheet" id="upsheet"><div class="panel">
+ <div class="shead"><h2 id="uptitle" style="font-size:20px"></h2><button class="icon" id="upx" aria-label="Close">&#10005;</button></div>
+ <div class="help" id="upsub"></div>
+ <div class="notes" id="upnotes"></div>
+ <div class="uppb hide" id="uppb"><i id="uppbi"></i></div>
+ <div class="upmsg" id="upmsg"></div>
+ <button class="btn" id="upgo">Update now</button>
+ <button class="btn ghost" id="uplater">Later</button>
+</div></div>
+
+<!-- ================= settings ================= -->
+<div class="sheet" id="settings"><div class="spage" id="spage">
+ <nav class="snav">
+  <div class="shead"><h2>Settings</h2><button class="icon" id="sx" aria-label="Close">&#10005;</button></div>
+  <input class="ssearch" id="ss" type="search" placeholder="Search settings" autocomplete="off">
+  <div id="catlist"></div>
+  <div class="sver" id="sinfo"></div>
+ </nav>
+ <div class="sbody" id="sbody"><div class="inner">
+  <button class="back" id="sback"><span>&#8249;</span> <span>Settings</span></button>
+
+  <section class="cat" data-cat="rec" data-icon="🎥" data-name="Recording" data-desc="When and what to record">
+   <div class="box">
+    <div class="item"><div class="lbl"><span>Recording on</span><input type="checkbox" class="sw" data-k="recording_on"></div>
+     <div class="help">Turn off to stop recording completely. Your clips stay.</div></div>
+    <div class="item"><div class="lbl">When to record</div>
+     <div class="choices" data-radio="record_when">
+      <label class="choice"><input type="radio" name="record_when" value="always"><b>Always</b>
+       <div class="help">Records all the time, games or not. Good if you also want clips of videos, Discord calls or anything on your screen.</div></label>
+      <label class="choice"><input type="radio" name="record_when" value="game"><b>Only while I'm gaming</b>
+       <div class="help">Starts when a game opens and stops when you close it. Uses no graphics card or disk when you're not playing.</div><div class="help" id="gamenow"></div></label>
+     </div></div>
+    <div class="item"><div class="lbl">What to record</div>
+     <div class="choices" data-radio="capture">
+      <label class="choice"><input type="radio" name="capture" value="screen"><b>Whole screen</b>
+       <div class="help">Everything on your screen. Works with every game, but pop-ups like Discord messages end up in clips too.</div></label>
+      <label class="choice"><input type="radio" name="capture" value="window"><b>Only the game window</b>
+       <div class="help">Just the game. When no game is open it records the whole screen instead.</div></label>
+     </div></div>
+    <div class="item"><div class="lbl">Screen</div><select data-k="monitor" id="monitors"></select>
+     <div class="help">Which monitor to record if you have more than one.</div></div>
+    <div class="item"><div class="lbl"><span>Show the mouse</span><input type="checkbox" class="sw" data-k="show_mouse"></div>
+     <div class="help">Shows your mouse pointer in clips.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="video" data-icon="🎞️" data-name="Video" data-desc="Format, quality and smoothness">
+   <div class="box">
+    <div class="item"><div class="lbl">Format</div>
+     <div class="choices" data-radio="video_format">
+      <label class="choice" data-fmt="h264"><input type="radio" name="video_format" value="h264"><b>H.264</b><span class="fmtcap"></span>
+       <div class="help">Works everywhere: every phone, WhatsApp, Discord, Instagram, video editors and old PCs. Biggest files. Pick this if you share clips a lot or aren't sure.</div></label>
+      <label class="choice" data-fmt="hevc"><input type="radio" name="video_format" value="hevc"><b>HEVC (H.265)</b><span class="fmtcap"></span>
+       <div class="help">Same quality at about half the size, so faster to send to your iPhone. Plays on iPhone, Mac and newer Android phones. Some Windows apps need the free "HEVC Video Extensions".</div></label>
+      <label class="choice" data-fmt="av1"><input type="radio" name="video_format" value="av1"><b>AV1</b><span class="fmtcap"></span>
+       <div class="help">Smallest files. Needs a new graphics card (NVIDIA RTX 40, AMD RX 7000, Intel Arc or newer). Plays on iPhone 15 Pro and newer. Many apps can't open it yet.</div></label>
+     </div>
+     <div class="help">All three are saved as .mp4 files.</div></div>
+    <div class="item"><div class="lbl">Quality</div><select data-k="bitrate">
+      <option value="10M">Good · 10 Mbps · about 40 MB per 30 s</option>
+      <option value="20M">High · 20 Mbps · about 75 MB per 30 s</option>
+      <option value="40M">Very high · 40 Mbps · about 150 MB per 30 s</option>
+      <option value="70M">Maximum · 70 Mbps · about 260 MB per 30 s</option></select>
+     <div class="help">Higher looks sharper in fast games but makes bigger files. HEVC and AV1 look as good as H.264 at about half this setting.</div></div>
+    <div class="item"><div class="lbl">Frames per second</div><select data-k="fps">
+      <option value="30">30 · smallest files</option><option value="60">60 · smooth (recommended)</option>
+      <option value="120">120 · very smooth, needs a strong PC</option><option value="144">144</option></select>
+     <div class="help">More frames make fast movement look smoother.</div></div>
+    <div class="item"><div class="lbl">Video size</div><select data-k="height">
+      <option value="0">Same as my screen</option><option value="2160">4K (2160p)</option><option value="1440">1440p</option>
+      <option value="1080">1080p</option><option value="720">720p · smallest</option></select>
+     <div class="help">Smaller sizes make smaller files. "Same as my screen" keeps every detail.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="hotkeys" data-icon="⌨️" data-name="Hotkeys" data-desc="Keys that save clips">
+   <div class="box">
+    <div class="item"><div class="help">Each hotkey saves a different amount of the last moments. They work inside games. On PC, tap Press keys and press the combination you want.</div>
+     <div id="hklist"></div><button class="add" id="hkadd">+ Add a hotkey</button></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="sound" data-icon="🔊" data-name="Sound" data-desc="Game sound and microphone">
+   <div class="box">
+    <div class="item"><div class="lbl"><span>Record game sound</span><input type="checkbox" class="sw" data-k="game_audio"></div>
+     <select data-k="speaker_device" id="speakers"></select>
+     <div class="help">Records what you hear from this output. "Windows default" follows whatever you're using.</div>
+     <div class="rng"><span>Volume</span><input type="range" min="0" max="200" step="5" data-k="game_volume"><b data-show="game_volume"></b></div></div>
+    <div class="item"><div class="lbl"><span>Record my microphone</span><input type="checkbox" class="sw" data-k="microphone"></div>
+     <select data-k="mic_device" id="mics"></select>
+     <div class="help">Your voice is saved on its own track, so later you can turn it down or mute it in Edit.</div>
+     <div class="rng"><span>Volume</span><input type="range" min="0" max="200" step="5" data-k="mic_volume"><b data-show="mic_volume"></b></div></div>
+    <div class="item hide" id="nosound"><div class="help" style="color:var(--gold)">Sound capture isn't installed. Run the ClipDrop setup again to fix it.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="alerts" data-icon="🔔" data-name="Alerts" data-desc="Sounds and pop-ups">
+   <div class="box">
+    <div class="item"><div class="lbl"><span>Play a sound when a clip is saved</span><input type="checkbox" class="sw" data-k="sound_on_save"></div>
+     <div class="help">A short ding when it's saved, or a buzz if something went wrong.</div></div>
+    <div class="item"><div class="lbl"><span>Show "Clip saved" in the game</span><input type="checkbox" class="sw" data-k="overlay"></div>
+     <div class="help">A small message in the top corner for 2 seconds. It never shows up in your clips. Works with borderless and windowed games. In exclusive fullscreen, Windows doesn't allow it, so you'll only hear the sound.</div></div>
+    <div class="item"><div class="lbl"><span>Tell me when files arrive on the PC</span><input type="checkbox" class="sw" data-k="notify_files"></div>
+     <div class="help">A sound and a small pop-up on the PC when your phone sends files.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="clips" data-icon="🎮" data-name="Clips and games" data-desc="Folders and game detection">
+   <div class="box">
+    <div class="item"><div class="lbl"><span>Sort clips into game folders</span><input type="checkbox" class="sw" data-k="name_by_game"></div>
+     <div class="help">Clips are named after the game and saved in a folder for it.</div></div>
+    <div class="item"><div class="lbl">Clips folder</div><input type="text" class="ltr" data-k="save_folder" spellcheck="false" autocapitalize="off">
+     <div class="help">Where new clips are saved on the PC. ~ means your user folder.</div></div>
+    <div class="item"><div class="lbl">Always count these as games</div><textarea class="ltr" data-k="extra_games" placeholder="minecraft, javaw"></textarea>
+     <div class="help">ClipDrop treats any program that fills the whole screen as a game. Add the program name of a game it misses, like one you play in a window. Separate names with commas.</div></div>
+    <div class="item"><div class="lbl">Never count these as games</div><textarea class="ltr" data-k="not_games" placeholder="vlc, netflix"></textarea>
+     <div class="help">Fullscreen programs that aren't games, like video players. Browsers and Discord are already left out.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="files" data-icon="📁" data-name="Files and sharing" data-desc="Sending files between PC and phone">
+   <div class="box">
+    <div class="item phoneonly"><div class="lbl">This device's name</div><input type="text" id="devname" maxlength="40">
+     <div class="help">Shown on files you send from this device, so you know where they came from. Only this device uses it.</div></div>
+    <div class="item"><div class="lbl">Folder for shared files</div><input type="text" class="ltr" data-k="share_folder" spellcheck="false" autocapitalize="off">
+     <div class="help">On the PC. Files from your phone go in a "From (phone name)" folder inside it, and files the PC sends go in "From PC".</div></div>
+    <div class="item"><div class="lbl"><span>Send PC photos and videos to iPhone Photos</span><input type="checkbox" class="sw" data-k="share_to_photos"></div>
+     <div class="help">If you set up auto-send, photos and videos you send from the PC go straight into your iPhone's Photos app. Other files wait in the Files tab.</div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="phone" data-icon="📱" data-name="Phone" data-desc="Connect, auto-send, shortcuts">
+   <div class="box">
+    <div class="item"><div class="lbl">Your phone link</div>
+     <div class="codebox"><code id="plink"></code><button id="pcopy">Copy</button></div>
+     <div class="help">Open it in Safari on your phone (same Wi-Fi). Keep it private.</div></div>
+    <a class="linkrow" href="/shortcut"><span>Auto-send to Photos<small>New clips go into your iPhone's Photos by themselves.</small></span><span>Set up <span>&#8250;</span></span></a>
+    <a class="linkrow" href="/shortcut#sendpc"><span>"Send to PC" in the iPhone share menu<small>Send photos and videos from the Photos app in full quality.</small></span><span>Set up <span>&#8250;</span></span></a>
+    <a class="linkrow pconly" href="/pair" target="_blank"><span>Show the QR code<small>Scan it with your phone camera to connect.</small></span><span>Open <span>&#8250;</span></span></a>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="lang" data-icon="🌐" data-name="Language" data-desc="English or Arabic">
+   <div class="box">
+    <div class="item"><div class="lbl">Language</div>
+     <div class="choices" data-radio="language">
+      <label class="choice"><input type="radio" name="language" value="auto"><b>Automatic</b><div class="help">Each device uses its own language.</div></label>
+      <label class="choice"><input type="radio" name="language" value="en"><b>English</b></label>
+      <label class="choice"><input type="radio" name="language" value="ar"><b>العربية</b><div class="help" dir="rtl">الواجهة كاملة بالعربي ومن اليمين لليسار.</div></label>
+     </div></div>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="updates" data-icon="🔄" data-name="Updates" data-desc="Keep ClipDrop up to date">
+   <div class="box">
+    <div class="item"><div class="vrow"><div><div class="lbl" id="vnow"></div><div class="help" id="vstate"></div></div><button id="vcheck">Check now</button></div></div>
+    <div class="item"><div class="lbl"><span>Check for updates automatically</span><input type="checkbox" class="sw" data-k="update_check"></div>
+     <div class="help">When ClipDrop starts and once a day. You get a message when a new version is ready.</div></div>
+    <div class="item"><div class="lbl"><span>Install updates automatically</span><input type="checkbox" class="sw" data-k="update_auto"></div>
+     <div class="help">Updates install by themselves, without asking. ClipDrop closes for a few seconds and opens again. Your settings, clips and files always stay.</div></div>
+    <a class="linkrow" id="vpage" href="#" target="_blank" rel="noopener"><span>All versions and what changed<small>Opens the ClipDrop page on GitHub.</small></span><span>Open <span>&#8250;</span></span></a>
+   </div>
+  </section>
+
+  <section class="cat" data-cat="app" data-icon="⚙️" data-name="App" data-desc="Startup and info">
+   <div class="box">
+    <div class="item"><div class="lbl"><span>Start with Windows</span><input type="checkbox" class="sw" data-k="start_with_windows"></div>
+     <div class="help">ClipDrop starts quietly by the clock when you turn on your PC.</div></div>
+    <a class="linkrow" href="/help"><span>How to use ClipDrop<small>Step-by-step guide for the PC and the phone.</small></span><span>Open <span>&#8250;</span></span></a>
+    <div class="item"><div class="help" id="sinfo2"></div></div>
+   </div>
+  </section>
+
+  <div class="nores">No settings match.</div>
+ </div></div>
+</div>
+<div class="savebar" id="savebar"><span>You have unsaved changes</span><button class="btn ghost" id="scancel">Undo</button><button class="btn" id="ssave">Save</button></div>
+</div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const T=I18N.T, AR=I18N.lang==="ar";
+const IS_PC=["localhost","127.0.0.1"].includes(location.hostname);
+let clips=[],filter="All",seen=null,dirty=false,status={},cur=null,lastClipAt=null,selecting=false,picked=new Set();
+let query="",sortBy="new",tab="clips";
+let files=[],fseen=null,fdirty=false,ffilter="all",fquery="",fsortBy="new",fcur=null,knownFiles=null;
+try{sortBy=localStorage.getItem("cd_sort")||"new";filter=localStorage.getItem("cd_filter")||"All";fsortBy=localStorage.getItem("cd_fsort")||"new";tab=localStorage.getItem("cd_tab")||"clips"}catch(e){}
+if(location.hash==="#files")tab="files";
+$("#sort").value=sortBy;$("#fsort").value=fsortBy;
+if(!IS_PC)$$(".pconly").forEach(e=>e.remove());else $$(".phoneonly").forEach(e=>e.remove());
+
+/* ---------- this device */
+function guessDevice(){const u=navigator.userAgent;
+ if(/iPhone/.test(u))return["iPhone","iphone"];if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))return["iPad","ipad"];
+ if(/Android/.test(u))return[/Mobile/.test(u)?"Android phone":"Android tablet","android"];if(/Macintosh/.test(u))return["Mac","mac"];return["PC","pc"]}
+const [DEV_GUESS,DEV_KIND]=guessDevice();
+function devName(){try{return localStorage.getItem("cd_device")||DEV_GUESS}catch(e){return DEV_GUESS}}
+
+/* ---------- helpers */
+const fmtSize=b=>b>=1e12?(b/1e12).toFixed(1)+" TB":b>=1e9?(b/1e9).toFixed(1)+" GB":b>=1e6?(b/1e6).toFixed(b>=1e8?0:1)+" MB":Math.max(1,b/1e3).toFixed(0)+" KB";
+const fmtT=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60),x=Math.floor(s%60);return m+":"+String(x).padStart(2,"0")};
+const fmtLen=s=>s>=60?(s%60?T("{m} min {s} s",{m:Math.floor(s/60),s:s%60}):T("{m} min",{m:s/60})):T("{s} s",{s});
+function ago(t){const s=Date.now()/1e3-t;if(s<60)return T("just now");if(s<3600)return T("{n} min ago",{n:Math.floor(s/60)});if(s<86400)return T("{n} h ago",{n:Math.floor(s/3600)});return new Date(t*1e3).toLocaleDateString(AR?"ar":undefined)}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function toast(msg,err){const t=$("#toast");t.textContent=msg;t.classList.toggle("err",!!err);t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2800)}
+async function api(path,body){const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw new Error(T(d.error||"Something went wrong"));return d}
+const busy=()=>["player","settings","fview","upsheet"].some(id=>$("#"+id).classList.contains("open"));
+
+/* ================= tabs ================= */
+function setTab(t){
+ tab=t;try{localStorage.setItem("cd_tab",t)}catch(e){}
+ $$("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+ const f=t==="files";
+ $("#ctools").classList.toggle("hide",f);$("#ftools").classList.toggle("hide",!f);
+ $("#list").classList.toggle("hide",f);$("#flist").classList.toggle("hide",!f);
+ $("#fab").classList.toggle("hide",f);$("#ffab").classList.toggle("hide",!f);$("#lens").classList.remove("open");
+ if(selecting)setSelecting(false);
+ if(f){markFilesSeen();renderFiles()}else render();
+}
+$("#tabs").onclick=e=>{const b=e.target.closest("button");if(b)setTab(b.dataset.tab)};
+
+/* ================= clips list ================= */
+const SORTS={new:(a,b)=>b.mtime-a.mtime,old:(a,b)=>a.mtime-b.mtime,big:(a,b)=>b.size-a.size,small:(a,b)=>a.size-b.size,
+ long:(a,b)=>(b.duration||0)-(a.duration||0),short:(a,b)=>(a.duration||1e9)-(b.duration||1e9),
+ az:(a,b)=>a.name.localeCompare(b.name),game:(a,b)=>a.game.localeCompare(b.game)||b.mtime-a.mtime};
+function visible(){
+ const q=query.trim().toLowerCase();
+ return clips.filter(c=>(filter==="All"||(filter==="★"?c.fav:c.game===filter))&&(!q||(c.name+" "+c.game).toLowerCase().includes(q))).sort(SORTS[sortBy]||SORTS.new);
+}
+function render(){
+ const games=[...new Set(clips.map(c=>c.game))].sort();
+ if(filter!=="All"&&filter!=="★"&&!games.includes(filter))filter="All";
+ const favs=clips.filter(c=>c.fav).length;
+ $("#games").innerHTML=["All",...(favs?["★"]:[]),...games].map(g=>`<button class="chip ${g===filter?"on":""}" data-g="${esc(g)}">${g==="★"?T("★ Favorites"):g==="All"?T("All"):esc(g==="Other"?T(g):g)}</button>`).join("");
+ const list=visible();
+ $("#list").classList.toggle("selecting",selecting&&tab==="clips");
+ if(!list.length){
+  $("#list").innerHTML=clips.length?`<div class="empty">${T("No clips match.")}</div>`:
+   `<div class="empty">${T("No clips yet.")}<br>${T("Press your hotkey on the PC ({key}) or tap Clip it to save the last moments of your game.",{key:esc((status.hotkeys||[{keys:"ctrl+f9"}])[0].keys)})}<br><br><a href="/help">${T("How it works")}</a></div>`;
+  return}
+ $("#list").innerHTML=list.map(c=>`
+  <div class="card ${picked.has(c.id)?"picked":""}" data-id="${c.id}">
+   <div class="media" role="button" tabindex="0">
+    <img loading="lazy" src="/t/${c.id}" onerror="this.style.visibility='hidden'">
+    <div class="play"><span></span></div>${Date.now()/1e3-c.mtime<600?`<div class="new">${T("NEW")}</div>`:""}
+    <div class="check">&#10003;</div>${c.duration?`<div class="badge">${fmtT(c.duration)}</div>`:""}
+   </div>
+   <div class="info"><div class="meta">
+     <div class="title">${esc(c.name)}</div>
+     <div class="sub">${esc(c.game==="Other"?T(c.game):c.game)} · ${ago(c.mtime)} · ${fmtSize(c.size)}</div></div>
+    <button class="star ${c.fav?"on":""}" data-star="${c.id}" aria-label="Favorite">&#9733;</button>
+    <a class="ibtn" href="/dl/${c.id}" download="${esc(c.file)}">${T("Save")}</a>
+   </div>
+  </div>`).join("");
+}
+function paintStatus(){
+ const st=status.state,dot=$("#dot");
+ dot.className="dot"+(st==="recording"?" rec":st==="waiting"?" wait":"");
+ $("#sttxt").textContent=st==="recording"?(T("Recording now")+(status.game?" · "+status.game:"")):st==="waiting"?T("Waiting for a game"):st==="off"?T("Recording off"):T("Starting…");
+ const hk=status.hotkeys||[];
+ $("#pill").title=hk.map(h=>h.keys+" → "+fmtLen(h.seconds)+(h.ok?"":" ("+T(h.error||"not active")+")")).join("\n");
+}
+function paintStorage(s){
+ if(!s)return;
+ const used=s.disk_bytes?1-s.free_bytes/s.disk_bytes:0;
+ const cls=used>.95?"full":used>.85?"warn":"";
+ $("#storage").innerHTML=`<span>${T("{n} clips",{n:s.count})} · ${fmtSize(s.clips_bytes)}</span><div class="sbar" title="${Math.round(used*100)}%"><i class="${cls}" style="width:${Math.round(used*100)}%"></i></div><span>${T("{size} free",{size:fmtSize(s.free_bytes)})}</span>`;
+}
+async function load(){
+ try{
+  const r=await fetch("/api/clips",{cache:"no-store"});if(!r.ok)return;
+  const d=await r.json();status=d.status||{};paintStatus();paintStorage(d.storage);
+  const sig=d.clips.map(c=>c.id+(c.fav?"*":"")+(c.duration||"")).join();
+  const lc=status.last_clip&&status.last_clip.at;
+  clips=d.clips;paintUpdate(status.update);
+  if(lastClipAt!==null&&lc&&lc!==lastClipAt)popup(status.last_clip.file);
+  lastClipAt=lc||0;
+  if(sig!==seen){seen=sig;dirty=true}
+  if(dirty&&!busy()&&tab==="clips"){dirty=false;render()}
+ }catch(e){}
+}
+$("#q").addEventListener("input",e=>{query=e.target.value;render()});
+$("#sort").onchange=e=>{sortBy=e.target.value;try{localStorage.setItem("cd_sort",sortBy)}catch(x){}render()};
+
+/* ================= select many (clips and files) ================= */
+function setSelecting(on){
+ selecting=on;picked.clear();
+ $("#selbtn").classList.toggle("on",on&&tab==="clips");$("#fselbtn").classList.toggle("on",on&&tab==="files");
+ $("#actionbar").classList.toggle("open",on);
+ $$("#actionbar [data-for=clips]").forEach(b=>b.classList.toggle("hide",tab!=="clips"));
+ $("#b_send").classList.toggle("hide",tab==="files"&&!(IS_PC));
+ $("#fab").style.display=$("#ffab").style.display=on?"none":"";
+ updateSel();tab==="files"?renderFiles():render();
+}
+function updateSel(){$("#seln").textContent=T("{n} selected",{n:picked.size})}
+$("#selbtn").onclick=()=>setSelecting(!selecting);
+$("#fselbtn").onclick=()=>setSelecting(!selecting);
+$("#b_cancel").onclick=()=>setSelecting(false);
+$("#b_all").onclick=()=>{const v=tab==="files"?fvisible():visible();if(picked.size===v.length)picked.clear();else v.forEach(c=>picked.add(c.id));updateSel();tab==="files"?renderFiles():render()};
+async function bulk(action,msg){
+ if(!picked.size){toast(T("Select some first"),1);return}
+ if(action==="delete"&&!confirm(T("Delete {n} item(s)? This can't be undone.",{n:picked.size})))return;
+ try{
+  let d;
+  if(tab==="files"){
+   if(action==="delete")d=await api("/api/files/delete",{ids:[...picked]});
+   else d=await api("/api/files/resend",{ids:[...picked]});
+   fseen=null;setSelecting(false);loadFiles();
+  }else{d=await api("/api/bulk",{ids:[...picked],action});seen=null;setSelecting(false);load()}
+  toast(T(msg,{n:d.count}));
+ }catch(e){toast(e.message,1)}
+}
+$("#b_fav").onclick=()=>bulk("fav","{n} added to favorites");
+$("#b_unfav").onclick=()=>bulk("unfav","{n} removed from favorites");
+$("#b_del").onclick=()=>bulk("delete","{n} deleted");
+$("#b_send").onclick=()=>bulk("send","{n} will go to your iPhone Photos next time the shortcut runs");
+
+/* ================= new clip pop-up ================= */
+function popup(file){
+ const c=clips.find(x=>x.file===file);
+ if(!c){toast(T("New clip saved")+" \u{1F3AC}");return}
+ $("#popimg").src="/t/"+c.id;$("#popname").textContent=c.name;
+ $("#popsave").href="/dl/"+c.id;$("#popsave").setAttribute("download",c.file);
+ $("#popwatch").onclick=()=>{hidePop();openPlayer(c.id)};
+ $("#pop").classList.add("show");if(navigator.vibrate)navigator.vibrate(60);
+ clearTimeout(popup._h);popup._h=setTimeout(hidePop,20000);
+}
+function hidePop(){$("#pop").classList.remove("show")}
+$("#popx").onclick=hidePop;$("#popsave").addEventListener("click",()=>setTimeout(hidePop,400));
+
+/* ================= Clip it ================= */
+async function clipNow(seconds){
+ $("#lens").classList.remove("open");
+ const f=$("#fab");f.classList.add("busy");
+ try{const d=await api("/api/clip",seconds?{seconds}:{});lastClipAt=null;await load();popup(d.file)}catch(e){toast(e.message,1)}
+ f.classList.remove("busy");
+}
+$("#fab").onclick=()=>{
+ const lens=[...new Set((status.hotkeys||[]).map(h=>h.seconds))].sort((a,b)=>a-b);
+ if(lens.length<2){clipNow(lens[0]);return}
+ const l=$("#lens");
+ if(l.classList.contains("open")){l.classList.remove("open");return}
+ l.innerHTML=lens.map(s=>`<button data-s="${s}">${T("Last {len}",{len:fmtLen(s)})}</button>`).join("");l.classList.add("open");
+};
+$("#lens").onclick=e=>{const b=e.target.closest("button");if(b)clipNow(+b.dataset.s)};
+
+/* ================= taps on lists ================= */
+document.addEventListener("click",e=>{
+ const chip=e.target.closest("#games .chip");if(chip){filter=chip.dataset.g;try{localStorage.setItem("cd_filter",filter)}catch(x){}render();return}
+ const fchip=e.target.closest("#fchips .chip");if(fchip){ffilter=fchip.dataset.f;renderFiles();return}
+ const st=e.target.closest("[data-star]");if(st){toggleFav(st.dataset.star);return}
+ const card=e.target.closest("main .card");
+ if(card&&selecting&&!e.target.closest("a")){e.preventDefault();const id=card.dataset.id;picked.has(id)?picked.delete(id):picked.add(id);card.classList.toggle("picked",picked.has(id));updateSel();return}
+ const m=e.target.closest("main .media");
+ if(m){const c=m.closest(".card");c.dataset.file?openFile(c.dataset.id):openPlayer(c.dataset.id)}
+ if(!e.target.closest("#lens")&&!e.target.closest("#fab"))$("#lens").classList.remove("open");
+});
+async function toggleFav(id){
+ const c=clips.find(x=>x.id===id);if(!c)return;
+ c.fav=!c.fav;
+ $$(`[data-star="${id}"]`).forEach(b=>b.classList.toggle("on",c.fav));
+ if(cur&&cur.id===id)$("#pstar").classList.toggle("on",c.fav);
+ try{await api("/api/favorite",{id,on:c.fav});seen=null}catch(e){toast(e.message,1)}
+}
+
+/* ================= clip player ================= */
+let mode="keep",info=null;
+function openPlayer(id){
+ cur=clips.find(c=>c.id===id);if(!cur)return;
+ $("#pv").src="/v/"+id;$("#ptitle").textContent=cur.name;
+ $("#psub").textContent=cur.game+" · "+fmtSize(cur.size)+(cur.duration?" · "+fmtT(cur.duration):"");
+ $("#pstar").classList.toggle("on",!!cur.fav);
+ $("#bsave").href="/dl/"+id;$("#bsave").setAttribute("download",cur.file);
+ $("#trimbox").classList.remove("open");$("#sharebox").classList.remove("open");$("#replace").checked=false;
+ $("#player").classList.add("open");
+}
+function closePlayer(){const v=$("#pv");v.pause();v.removeAttribute("src");v.load();$("#player").classList.remove("open");cur=null;if(dirty){dirty=false;render()}}
+$("#pstar").onclick=()=>cur&&toggleFav(cur.id);
+function trimUI(){
+ const v=$("#pv"),d=v.duration||0,a=+$("#t0").value,b=+$("#t1").value;
+ const lo=Math.min(a,b),hi=Math.max(a,b);
+ $("#tsel").style.left=(lo/(d||1)*100)+"%";$("#tsel").style.width=((hi-lo)/(d||1)*100)+"%";
+ $("#tt0").textContent=fmtT(lo);$("#tt1").textContent=fmtT(hi);
+ $("#ttlen").textContent=T("{t} kept",{t:fmtT(mode==="keep"?hi-lo:d-(hi-lo))});
+ $("#tl").classList.toggle("cut",mode==="cut");
+ return[lo,hi];
+}
+function keepRanges(){const d=$("#pv").duration,[lo,hi]=trimUI();if(mode==="keep")return[[lo,hi]];return[[0,lo],[hi,d]].filter(r=>r[1]-r[0]>=0.1)}
+function volRow(id,label){return `<div class="vol"><span>${T(label)}</span><input type="range" id="${id}" min="0" max="200" step="5" value="100"><b id="${id}_v">100%</b></div>`}
+$("#btrim").onclick=async()=>{
+ const v=$("#pv");if(!v.duration){toast(T("Let the video load first"),1);return}
+ const box=$("#trimbox");box.classList.toggle("open");if(!box.classList.contains("open"))return;
+ $("#t0").max=$("#t1").max=v.duration;$("#t0").value=0;$("#t1").value=v.duration;
+ $("#tstrip").style.backgroundImage=`url(/strip/${cur.id})`;
+ try{info=await(await fetch("/info/"+cur.id)).json()}catch(e){info={audio_tracks:1}}
+ $("#vols").innerHTML=info.audio_tracks>=3?volRow("gv","Game")+volRow("vv","Voice"):(info.audio_tracks>=1?volRow("gv","Volume"):"");
+ $$("#vols input").forEach(i=>i.oninput=()=>$("#"+i.id+"_v").textContent=i.value+"%");
+ trimUI();box.scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+$("#mode").onclick=e=>{const b=e.target.closest("button");if(!b)return;mode=b.dataset.m;$$("#mode button").forEach(x=>x.classList.toggle("on",x===b));trimUI()};
+$("#t0").oninput=()=>{const[lo]=trimUI();$("#pv").currentTime=lo};
+$("#t1").oninput=()=>{const[,hi]=trimUI();$("#pv").currentTime=hi};
+$("#btrimgo").onclick=async()=>{
+ const keep=keepRanges(),total=keep.reduce((t,r)=>t+r[1]-r[0],0);
+ if(total<0.5){toast(T("Keep at least half a second"),1);return}
+ const replace=$("#replace").checked;
+ if(replace&&!confirm(T("Replace the original clip? This can't be undone.")))return;
+ const g=$("#gv"),vv=$("#vv"),btn=$("#btrimgo");
+ btn.textContent=T("Saving… (this can take a bit)");btn.disabled=true;
+ try{const d=await api("/api/export",{id:cur.id,keep,game_vol:g?g.value/100:1,voice_vol:vv?vv.value/100:1,replace});toast(T("Saved: {name}",{name:d.name}));seen=null;closePlayer();load()}
+ catch(e){toast(e.message,1)}
+ btn.textContent=T("Save edited copy");btn.disabled=false;
+};
+$("#bshare").onclick=async()=>{
+ const box=$("#sharebox"),b=$("#bshare");
+ box.classList.add("open");box.textContent=T("Making a small copy for sharing…");b.disabled=true;
+ try{const d=await api("/api/export",{id:cur.id,share:true});seen=null;
+  box.innerHTML=`${T("Small copy ready (720p, H.264, plays everywhere).")} <a class="btn" href="/dl/${d.id}" download="${esc(d.file)}">${T("Save small copy")}</a>`}
+ catch(e){box.textContent=T("Couldn't make it: {e}",{e:e.message})}
+ b.disabled=false;
+};
+$("#brename").onclick=async()=>{
+ const name=prompt(T("New name:"),cur.name);if(!name||name===cur.name)return;
+ try{const d=await api("/api/rename",{id:cur.id,name});toast(T("Renamed to {name}",{name:d.name}));seen=null;closePlayer();load()}catch(e){toast(e.message,1)}
+};
+$("#bdelete").onclick=async()=>{
+ if(!confirm(T("Delete this clip? This can't be undone.")))return;
+ try{await api("/api/delete",{id:cur.id});toast(T("Deleted"));seen=null;closePlayer();load()}catch(e){toast(e.message,1)}
+};
+const bf=$("#bfolder");if(bf)bf.onclick=()=>api("/api/open_folder",{id:cur.id}).catch(e=>toast(e.message,1));
+$("#bclose").onclick=closePlayer;
+$("#player").addEventListener("click",e=>{if(e.target.id==="player")closePlayer()});
+
+/* ================= files ================= */
+const FICON={video:"🎬",image:"🖼️",audio:"🎵",doc:"📄",zip:"🗜️",other:"📦"};
+const FSORTS={new:(a,b)=>b.mtime-a.mtime,old:(a,b)=>a.mtime-b.mtime,big:(a,b)=>b.size-a.size,small:(a,b)=>a.size-b.size,az:(a,b)=>a.name.localeCompare(b.name)};
+const KIND_ICON={iphone:"📱",ipad:"📱",android:"📱",phone:"📱",mac:"💻",pc:"💻"};
+function fromLabel(f){return f.from==="pc"?T("From PC"):T("From {device}",{device:f.device||T("phone")})}
+function fvisible(){
+ const q=fquery.trim().toLowerCase();
+ return files.filter(f=>(ffilter==="all"||(ffilter==="pc"?f.from==="pc":ffilter==="phone"?f.from==="phone":f.from==="phone"&&f.device===ffilter.slice(4)))
+  &&(!q||(f.file+" "+f.device).toLowerCase().includes(q))).sort(FSORTS[fsortBy]||FSORTS.new);
+}
+function renderFiles(){
+ const phones=[...new Set(files.filter(f=>f.from==="phone").map(f=>f.device))].sort();
+ const chips=[["all",T("All")],["phone","📱 "+T("From phones")],["pc","💻 "+T("From PC")]];
+ if(phones.length>1)phones.forEach(p=>chips.push(["dev:"+p,"📱 "+p]));
+ if(!chips.some(c=>c[0]===ffilter))ffilter="all";
+ $("#fchips").innerHTML=chips.map(([k,l])=>`<button class="chip ${k===ffilter?"on":""}" data-f="${esc(k)}">${esc(l)}</button>`).join("");
+ const list=fvisible(),el=$("#flist");
+ el.classList.toggle("selecting",selecting&&tab==="files");
+ if(!list.length){
+  el.innerHTML=files.length?`<div class="empty">${T("No files match.")}</div>`:
+   `<div class="empty">${T("No shared files yet.")}<br>${IS_PC?T("Drag files into this window, or tap Send to phone. You can also right-click a file in Windows and pick Send to, then ClipDrop."):T("Tap Send to PC to send photos, videos or any file to your PC.")}</div>`;
+  return}
+ el.innerHTML=list.map(f=>{const vis=f.type==="image"||f.type==="video";return`
+  <div class="card ${picked.has(f.id)?"picked":""}" data-id="${f.id}" data-file="1">
+   <div class="media" role="button" tabindex="0">
+    <div class="ficon">${FICON[f.type]||"📦"}<small>${esc(f.ext)}</small></div>
+    ${vis?`<img loading="lazy" src="/ft/${f.id}" style="position:relative" onerror="this.remove()">`:""}
+    ${f.type==="video"?'<div class="play"><span></span></div>':""}
+    <div class="from ${f.from==="pc"?"pc":"phone"}">${KIND_ICON[f.kind]||"📱"} ${esc(fromLabel(f))}</div>
+    <div class="check">&#10003;</div>
+   </div>
+   <div class="info"><div class="meta">
+     <div class="title">${esc(f.file)}</div>
+     <div class="sub">${ago(f.mtime)} · ${fmtSize(f.size)}</div></div>
+    <a class="ibtn" href="/fdl/${f.id}" download="${esc(f.file)}">${T("Save")}</a>
+   </div>
+  </div>`}).join("");
+}
+function lastSeenFiles(){try{return +localStorage.getItem("cd_fseen")||0}catch(e){return 0}}
+function markFilesSeen(){try{localStorage.setItem("cd_fseen",String(Date.now()/1e3))}catch(e){}$("#fcnt").classList.remove("show")}
+function fromOther(f){return IS_PC?f.from==="phone":!(f.from==="phone"&&f.device===devName())}
+async function loadFiles(){
+ try{
+  const r=await fetch("/api/files",{cache:"no-store"});if(!r.ok)return;
+  const d=await r.json();files=d.files;
+  // tell about new files from the other side
+  const ids=new Set(files.map(f=>f.id));
+  if(knownFiles){const fresh=files.filter(f=>!knownFiles.has(f.id)&&fromOther(f)&&!myUploads.has(f.file));
+   if(fresh.length)toast(fresh.length===1?T("New file from {device}",{device:fresh[0].from==="pc"?T("PC"):fresh[0].device}):T("{n} new files",{n:fresh.length}))}
+  knownFiles=ids;
+  const since=lastSeenFiles(),unseen=files.filter(f=>f.mtime>since&&fromOther(f)).length;
+  if(tab==="files")markFilesSeen();else{$("#fcnt").textContent=unseen;$("#fcnt").classList.toggle("show",unseen>0)}
+  const sig=files.map(f=>f.id+f.name).join();
+  if(sig!==fseen){fseen=sig;fdirty=true}
+  if(fdirty&&!busy()&&tab==="files"){fdirty=false;renderFiles()}
+ }catch(e){}
+}
+$("#fq").addEventListener("input",e=>{fquery=e.target.value;renderFiles()});
+$("#fsort").onchange=e=>{fsortBy=e.target.value;try{localStorage.setItem("cd_fsort",fsortBy)}catch(x){}renderFiles()};
+
+/* --- sending files */
+const myUploads=new Set();
+let upq=[],upBusy=false;
+$("#ffabt").textContent=IS_PC?T("Send to phone"):T("Send to PC");
+$("#ffab").onclick=()=>$("#fpick").click();
+$("#fpick").onchange=e=>{queue([...e.target.files]);e.target.value=""};
+function queue(list){
+ if(!list.length)return;
+ list.forEach(f=>upq.push({f,pct:0,state:"wait",id:Math.random().toString(36).slice(2)}));
+ paintQueue();$("#upq").classList.add("show");if(!upBusy)nextUpload();
+}
+function paintQueue(){
+ const left=upq.filter(u=>u.state==="wait"||u.state==="up").length;
+ $("#upqt").textContent=left?T("Sending {n} file(s)…",{n:left}):T("All sent ✓");
+ $("#upql").innerHTML=upq.map(u=>`<div class="upi ${u.state==="ok"?"ok":u.state==="err"?"err":""}"><div class="n"><span>${esc(u.f.name)}</span><span>${u.state==="ok"?"✓":u.state==="err"?esc(T("Failed")):u.pct+"%"}</span></div><div class="pb"><i style="width:${u.state==="ok"?100:u.pct}%"></i></div></div>`).join("");
+}
+function nextUpload(){
+ const u=upq.find(x=>x.state==="wait");
+ if(!u){upBusy=false;paintQueue();fseen=null;loadFiles();setTimeout(()=>{if(!upq.some(x=>x.state==="wait"||x.state==="up"||x.state==="err")){$("#upq").classList.remove("show");upq=[]}},4000);return}
+ upBusy=true;u.state="up";paintQueue();
+ const x=new XMLHttpRequest();
+ const qs=new URLSearchParams({name:u.f.name,device:devName(),kind:DEV_KIND,from:IS_PC?"pc":(DEV_KIND==="pc"||DEV_KIND==="mac"?"pc":"phone")});
+ x.open("POST","/api/upload?"+qs);
+ x.upload.onprogress=e=>{if(e.lengthComputable){u.pct=Math.floor(e.loaded/e.total*100);paintQueue()}};
+ x.onload=()=>{let d={};try{d=JSON.parse(x.responseText)}catch(e){}
+  if(x.status===200&&d.ok){u.state="ok";myUploads.add(d.file)}else{u.state="err";toast(T(d.error||"Couldn't send {name}",{name:u.f.name}),1)}nextUpload()};
+ x.onerror=()=>{u.state="err";toast(T("Couldn't send {name}",{name:u.f.name}),1);nextUpload()};
+ x.send(u.f);
+}
+$("#upqx").onclick=()=>{$("#upq").classList.remove("show");if(!upBusy)upq=[]};
+// drag and drop (PC)
+let dragN=0;
+window.addEventListener("dragenter",e=>{if(![...(e.dataTransfer.types||[])].includes("Files"))return;e.preventDefault();dragN++;$("#drop").classList.add("show")});
+window.addEventListener("dragover",e=>{if([...(e.dataTransfer.types||[])].includes("Files"))e.preventDefault()});
+window.addEventListener("dragleave",()=>{dragN=Math.max(0,dragN-1);if(!dragN)$("#drop").classList.remove("show")});
+window.addEventListener("drop",e=>{e.preventDefault();dragN=0;$("#drop").classList.remove("show");
+ const fl=[...(e.dataTransfer.files||[])].filter(f=>f.size>0||f.type);if(!fl.length)return;if(tab!=="files")setTab("files");queue(fl)});
+if(!IS_PC){$("#drop span").textContent=T("Drop files to send to your PC");$("#drop small").textContent=T("They show up in Files on your PC.")}
+
+/* --- file viewer */
+function openFile(id){
+ fcur=files.find(f=>f.id===id);if(!fcur)return;
+ const f=fcur,src="/f/"+id,big=$("#fbig");
+ big.innerHTML=f.type==="image"&&!/^(heic|heif)$/.test(f.ext)?`<img src="${src}" alt="">`:
+  f.type==="video"?`<video src="${src}" controls playsinline></video>`:
+  f.type==="audio"?`<audio src="${src}" controls></audio>`:
+  `<div class="ficon">${FICON[f.type]||"📦"}<small>${esc(f.ext)}</small></div>`;
+ $("#ftitle").textContent=f.file;
+ $("#fsub").textContent=fromLabel(f)+" · "+ago(f.mtime)+" · "+fmtSize(f.size);
+ $("#fsave").href="/fdl/"+id;$("#fsave").setAttribute("download",f.file);
+ const ios=/iPhone|iPad/.test(navigator.userAgent);
+ $("#ftip").textContent=ios&&f.type==="image"?T("To put it in Photos: press and hold the picture, then tap Save to Photos."):
+  ios&&f.type==="video"?T("To put it in Photos: tap Save, open it from Downloads in the Files app, then Share and Save Video."):"";
+ $("#fview").classList.add("open");
+}
+function closeFile(){const v=$("#fbig video,#fbig audio");if(v){v.pause();v.removeAttribute("src");v.load()}$("#fbig").innerHTML="";$("#fview").classList.remove("open");fcur=null;if(fdirty){fdirty=false;renderFiles()}}
+$("#fclose").onclick=closeFile;
+$("#fview").addEventListener("click",e=>{if(e.target.id==="fview")closeFile()});
+$("#frename").onclick=async()=>{
+ const name=prompt(T("New name:"),fcur.name);if(!name||name===fcur.name)return;
+ try{const d=await api("/api/files/rename",{id:fcur.id,name});toast(T("Renamed to {name}",{name:d.name}));fseen=null;closeFile();loadFiles()}catch(e){toast(e.message,1)}
+};
+$("#fdelete").onclick=async()=>{
+ if(!confirm(T("Delete this file from the PC? This can't be undone.")))return;
+ try{await api("/api/files/delete",{id:fcur.id});toast(T("Deleted"));fseen=null;closeFile();loadFiles()}catch(e){toast(e.message,1)}
+};
+const ff=$("#ffolder");if(ff)ff.onclick=()=>api("/api/files/open",{id:fcur.id}).catch(e=>toast(e.message,1));
+
+/* ================= settings ================= */
+let S={},OPT={},hks=[],snap="",scat=null;
+const LENS=[10,15,20,30,45,60,90,120,180,300,600];
+const NUMS=["monitor","fps","height","game_volume","mic_volume"];
+const WIDE=()=>matchMedia("(min-width:860px)").matches;
+// category menu
+$("#catlist").innerHTML=$$(".cat").map(c=>`<button class="catbtn" data-go="${c.dataset.cat}"><span class="ci">${c.dataset.icon}</span><span class="ct"><b>${T(c.dataset.name)}</b><small>${T(c.dataset.desc)}</small></span><span class="chev">&#8250;</span></button>`).join("");
+$$(".cat").forEach(c=>c.insertAdjacentHTML("afterbegin",`<div class="cathead"><span class="ci">${c.dataset.icon}</span><div><h3>${T(c.dataset.name)}</h3><p>${T(c.dataset.desc)}</p></div></div>`));
+$$(".cat").forEach(c=>{if(!["phone","lang"].includes(c.dataset.cat))c.insertAdjacentHTML("beforeend",`<button class="reset" data-reset="${c.dataset.cat}">${T("Reset this section to default")}</button>`)});
+function showCat(name){
+ scat=name;$("#ss").value="";$("#sbody").classList.remove("searching","none");
+ $$(".cat").forEach(c=>c.classList.toggle("on",c.dataset.cat===name));
+ $$(".catbtn").forEach(b=>b.classList.toggle("on",b.dataset.go===name));
+ $("#spage").classList.add("incat");$("#sbody").scrollTop=0;
+}
+$("#catlist").onclick=e=>{const b=e.target.closest("[data-go]");if(b)showCat(b.dataset.go)};
+$("#sback").onclick=()=>{$("#spage").classList.remove("incat");$("#ss").value="";$("#sbody").classList.remove("searching","none")};
+$("#ss").addEventListener("input",e=>{
+ const q=e.target.value.trim().toLowerCase(),body=$("#sbody");
+ if(!q){body.classList.remove("searching","none");if(!WIDE())$("#spage").classList.remove("incat");else showCat(scat||"rec");return}
+ body.classList.add("searching");$("#spage").classList.add("incat");let any=false;
+ $$(".cat").forEach(c=>{let hit=false;
+  c.querySelectorAll(".item,.linkrow").forEach(it=>{const m=it.textContent.toLowerCase().includes(q)||T(c.dataset.name).toLowerCase().includes(q);it.classList.toggle("nomatch",!m);hit=hit||m});
+  c.classList.toggle("nomatch",!hit);any=any||hit});
+ body.classList.toggle("none",!any);
+});
+$("#ss").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";e.target.dispatchEvent(new Event("input"))}});
+function radioPaint(){$$(".choice").forEach(c=>c.classList.toggle("on",c.querySelector("input").checked))}
+function hkPaint(){
+ const st=status.hotkeys||[];
+ $("#hklist").innerHTML=hks.map((h,i)=>{const s=st.find(x=>x.keys===h.keys);
+  return `<div class="hkrow"><input type="text" value="${esc(h.keys)}" data-hk="${i}" autocapitalize="off" autocorrect="off" spellcheck="false">
+  ${IS_PC?`<button class="rec" data-rec="${i}">${T("Press keys")}</button>`:""}
+  <select data-hks="${i}">${LENS.concat(LENS.includes(h.seconds)?[]:[h.seconds]).sort((a,b)=>a-b).map(s=>`<option value="${s}" ${s===h.seconds?"selected":""}>${fmtLen(s)}</option>`).join("")}</select>
+  <button class="rm" data-rm="${i}" aria-label="Remove">&#10005;</button></div>
+  ${s&&!s.ok&&s.error?`<div class="hkerr">${esc(T(s.error))}</div>`:""}`}).join("");
+ checkDirty();
+}
+$("#hklist").addEventListener("input",e=>{const i=e.target.dataset.hk;if(i!==undefined){hks[i].keys=e.target.value.trim().toLowerCase();checkDirty()}});
+$("#hklist").addEventListener("change",e=>{const i=e.target.dataset.hks;if(i!==undefined){hks[i].seconds=+e.target.value;checkDirty()}});
+$("#hklist").addEventListener("click",e=>{
+ const rm=e.target.dataset.rm;if(rm!==undefined){if(hks.length<2){toast(T("Keep at least one hotkey"),1);return}hks.splice(+rm,1);hkPaint();return}
+ const rc=e.target.dataset.rec;if(rc!==undefined){
+  const b=e.target;b.classList.add("on");b.textContent=T("Press now…");
+  const onKey=ev=>{ev.preventDefault();
+   if(["Control","Shift","Alt","Meta"].includes(ev.key))return;
+   const k=[];if(ev.ctrlKey)k.push("ctrl");if(ev.altKey)k.push("alt");if(ev.shiftKey)k.push("shift");if(ev.metaKey)k.push("win");
+   let key=ev.code.startsWith("Key")?ev.code.slice(3).toLowerCase():ev.code.startsWith("Digit")?ev.code.slice(5):ev.code.startsWith("Numpad")?"num"+ev.code.slice(6):ev.key.toLowerCase();
+   if(/^F\d+$/.test(ev.code))key=ev.code.toLowerCase();
+   if(ev.key==="Escape"){window.removeEventListener("keydown",onKey,true);hkPaint();return}
+   k.push(key);hks[rc].keys=k.join("+");window.removeEventListener("keydown",onKey,true);hkPaint()};
+  window.addEventListener("keydown",onKey,true);
+ }
+});
+$("#hkadd").onclick=()=>{if(hks.length>=8)return;const used=new Set(hks.map(h=>h.keys));let n=10;while(used.has("ctrl+f"+n)&&n<12)n++;hks.push({keys:"ctrl+f"+n,seconds:120});hkPaint()};
+function devOptions(list,cur){return `<option value="">${T("Windows default")}</option>`+list.map(d=>`<option value="${esc(d.name)}" ${d.name===cur?"selected":""}>${esc(d.name)}${d.default?" "+T("(default)"):""}</option>`).join("")}
+function fill(s,scope){
+ (scope||document).querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,v=s[k];if(v===undefined)return;
+  if(el.type==="checkbox")el.checked=!!v;else if(Array.isArray(v))el.value=v.join(", ");
+  else{
+   // a value set by hand in settings.json that isn't in the list: show it anyway
+   if(el.tagName==="SELECT"&&![...el.options].some(o=>o.value===String(v))){const o=document.createElement("option");o.value=String(v);o.textContent=String(v)+" "+T("(custom)");el.appendChild(o)}
+   el.value=String(v)}});
+ (scope||document).querySelectorAll("[data-radio]").forEach(g=>{const k=g.dataset.radio;if(s[k]!==undefined)g.querySelectorAll("input").forEach(i=>i.checked=i.value===String(s[k]))});
+ $$("[data-show]").forEach(b=>b.textContent=($(`[data-k="${b.dataset.show}"]`).value||100)+"%");
+ radioPaint();
+}
+function gather(){
+ const body={};
+ $$("#settings [data-k]").forEach(el=>{const k=el.dataset.k;
+  if(el.type==="checkbox")body[k]=el.checked;
+  else if(el.tagName==="TEXTAREA")body[k]=el.value;
+  else if(NUMS.includes(k))body[k]=+el.value;
+  else body[k]=el.value});
+ $$("#settings [data-radio]").forEach(g=>{const c=g.querySelector("input:checked");if(c)body[g.dataset.radio]=c.value});
+ body.hotkeys=hks;
+ return body;
+}
+function checkDirty(){if(!snap)return;$("#savebar").classList.toggle("show",JSON.stringify(gather())!==snap)}
+async function openSettings(cat){
+ try{
+  const [s,o]=await Promise.all([fetch("/api/settings").then(r=>r.json()),fetch("/api/options").then(r=>r.json())]);
+  S=s;OPT=o;hks=JSON.parse(JSON.stringify(s.hotkeys||[]));snap="";
+  $("#monitors").innerHTML=o.monitors.map(m=>`<option value="${m.index}">${esc(m.name)} · ${m.width}×${m.height}</option>`).join("");
+  $("#speakers").innerHTML=devOptions(o.audio.speakers||[],s.speaker_device);
+  $("#mics").innerHTML=devOptions(o.audio.mics||[],s.mic_device);
+  $("#nosound").classList.toggle("hide",!!o.audio.available);
+  fill(s);
+  $$("[data-fmt]").forEach(c=>{const f=c.dataset.fmt,cap=(o.formats||{})[f],t=c.querySelector(".fmtcap"),inp=c.querySelector("input");
+   if(!o.formats_ready){t.innerHTML="";c.classList.remove("off");inp.disabled=false;return}
+   if(cap){t.innerHTML=`<span class="tagok">${cap.gpu?T("✓ your graphics card"):T("✓ uses the processor")}</span>`;c.classList.remove("off");inp.disabled=false}
+   else{t.innerHTML=`<span class="tagno">${T("not supported on this PC")}</span>`;c.classList.add("off");inp.disabled=true}});
+  $("#gamenow").textContent=o.game?T("Right now: {game} is open.",{game:o.game}):"";
+  $("#plink").textContent=o.phone_url||"";
+  if($("#devname"))$("#devname").value=devName();
+  const ver=T("ClipDrop {v}",{v:status.version||""})+(status.encoder?" · "+T("Recording with {enc}",{enc:status.encoder})+(status.capture_mode?" ("+status.capture_mode+")":""):"");
+  $("#sinfo").textContent=ver;$("#sinfo2").textContent=ver;
+  try{UP=await(await fetch("/api/update",{cache:"no-store"})).json()}catch(e){}paintVersionBox();
+  hkPaint();snap=JSON.stringify(gather());$("#savebar").classList.remove("show");
+  $("#settings").classList.add("open");
+  if(cat||WIDE())showCat(cat||scat||"rec");else $("#spage").classList.remove("incat");
+ }catch(e){toast(T("Couldn't load settings"),1)}
+}
+$("#gear").onclick=()=>openSettings();
+$("#settings").addEventListener("change",e=>{if(e.target.type==="radio")radioPaint();checkDirty()});
+$("#settings").addEventListener("input",e=>{const k=e.target.dataset.k;if(k&&e.target.type==="range"){const b=$(`[data-show="${k}"]`);if(b)b.textContent=e.target.value+"%"}checkDirty()});
+$("#settings").addEventListener("click",e=>{const r=e.target.dataset.reset;if(!r)return;
+ const sec=$(`.cat[data-cat="${r}"]`),D=OPT.defaults||{};fill(D,sec);
+ if(r==="hotkeys"){hks=JSON.parse(JSON.stringify(D.hotkeys||[{keys:"ctrl+f9",seconds:30}]));hkPaint()}
+ if(r==="files"&&$("#devname")){$("#devname").value=DEV_GUESS;saveDevName()}
+ checkDirty();toast(T("Back to default. Tap Save to keep it."))});
+function saveDevName(){if(!$("#devname"))return;const v=$("#devname").value.trim();try{v&&v!==DEV_GUESS?localStorage.setItem("cd_device",v):localStorage.removeItem("cd_device")}catch(e){}}
+if($("#devname"))$("#devname").addEventListener("change",()=>{saveDevName();toast(T("Saved"))});
+$("#pcopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#plink").textContent);toast(T("Copied"))}catch(e){toast(T("Couldn't copy. Press and hold the link to copy it."),1)}};
+function closeSettings(){
+ if($("#savebar").classList.contains("show")&&!confirm(T("Close without saving your changes?")))return;
+ $("#settings").classList.remove("open");$("#savebar").classList.remove("show");snap="";if(location.hash==="#settings")history.replaceState(null,"",location.pathname+location.search);
+ if(dirty){dirty=false;render()}if(fdirty){fdirty=false;renderFiles()}
+}
+$("#sx").onclick=closeSettings;
+$("#scancel").onclick=()=>{fill(S);hks=JSON.parse(JSON.stringify(S.hotkeys||[]));hkPaint();$("#savebar").classList.remove("show")};
+$("#ssave").onclick=async()=>{
+ const body=gather(),b=$("#ssave");b.disabled=true;
+ try{const d=await api("/api/settings",body);
+  const langChanged=(S.language||"auto")!==(d.settings.language||"auto");
+  S=d.settings;snap=JSON.stringify(gather());$("#savebar").classList.remove("show");toast(T("Settings saved"));
+  if(langChanged){setTimeout(()=>location.reload(),500);return}
+  setTimeout(load,1500)}
+ catch(e){toast(e.message,1)}
+ b.disabled=false;
+};
+
+/* ================= updates ================= */
+let UP={},upWaitVer=null;
+function paintUpdate(u){
+ if(!u)return;
+ const bar=$("#upbar");bar.classList.toggle("hide",!u.available);
+ if(u.available)$("#upbart").textContent=u.status==="downloading"?T("Downloading update… {p}%",{p:u.progress}):u.status==="installing"?T("Installing update…"):T("ClipDrop {v} is ready",{v:u.version});
+ if($("#upsheet").classList.contains("open")&&(u.status!==UP.status||u.progress!==UP.progress))refreshUpdate();
+}
+function notesHTML(txt){
+ const lines=String(txt||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);let out="",inList=false;
+ for(const l of lines){const li=l.match(/^[-*•]\s+(.*)/);
+  if(li){if(!inList){out+="<ul>";inList=true}out+="<li>"+esc(li[1]).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+"</li>"}
+  else{if(inList){out+="</ul>";inList=false}out+="<p>"+esc(l.replace(/^#+\s*/,"")).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+"</p>"}}
+ return out+(inList?"</ul>":"");
+}
+async function refreshUpdate(){
+ try{UP=await(await fetch("/api/update",{cache:"no-store"})).json()}catch(e){return}
+ const u=UP;
+ $("#uptitle").textContent=u.available?T("ClipDrop {v} is ready",{v:u.version}):T("ClipDrop is up to date");
+ $("#upsub").textContent=u.available?T("You have {cur}. Download size {size}.",{cur:u.current,size:fmtSize(u.size||0)}):T("You have the newest version ({cur}).",{cur:u.current});
+ $("#upnotes").innerHTML=u.available?notesHTML((AR&&u.notes_ar)?u.notes_ar:u.notes_en):"";
+ const busyUp=u.status==="downloading"||u.status==="installing";
+ $("#uppb").classList.toggle("hide",!busyUp);$("#uppbi").style.width=(u.status==="installing"?100:u.progress)+"%";
+ const m=$("#upmsg");m.classList.toggle("err",u.status==="error");
+ m.textContent=u.status==="downloading"?T("Downloading… {p}%",{p:u.progress}):u.status==="installing"?T("Installing. ClipDrop closes and opens again in a moment. This page reloads by itself."):u.status==="error"?T(u.error||"Something went wrong"):"";
+ $("#upgo").classList.toggle("hide",!u.available||busyUp);$("#upgo").textContent=u.status==="error"?T("Try again"):T("Update now");
+ $("#uplater").textContent=busyUp?T("Hide"):T("Later");
+ if(u.status==="installing"&&!upWaitVer){upWaitVer=u.version;waitForNewVersion()}
+}
+async function openUpdate(){await refreshUpdate();$("#upsheet").classList.add("open")}
+function closeUpdate(){$("#upsheet").classList.remove("open");if(location.hash==="#update")history.replaceState(null,"",location.pathname+location.search)}
+$("#upbarb").onclick=openUpdate;$("#upx").onclick=closeUpdate;$("#uplater").onclick=closeUpdate;
+$("#upsheet").addEventListener("click",e=>{if(e.target.id==="upsheet")closeUpdate()});
+$("#upgo").onclick=async()=>{try{await api("/api/update/install",{});setTimeout(refreshUpdate,400)}catch(e){toast(e.message,1)}};
+async function waitForNewVersion(){
+ // ClipDrop restarts during the update: wait until the new version answers, then reload
+ for(let i=0;i<120;i++){
+  await new Promise(r=>setTimeout(r,2000));
+  try{const d=await(await fetch("/api/clips",{cache:"no-store"})).json();if(d.status&&d.status.version===upWaitVer){location.reload();return}}catch(e){}
+ }
+}
+function paintVersionBox(){
+ $("#vnow").textContent=T("ClipDrop {v}",{v:UP.current||status.version||""});
+ $("#vstate").textContent=UP.status==="checking"?T("Checking…"):UP.status==="error"?T(UP.error||"Something went wrong"):UP.available?T("Version {v} is ready to install.",{v:UP.version}):UP.checked_at?T("You have the newest version."):"";
+ $("#vcheck").textContent=UP.available?T("See update"):T("Check now");
+ $("#vpage").href=UP.page||"#";
+}
+$("#vcheck").onclick=async()=>{
+ if(UP.available){openUpdate();return}
+ UP.status="checking";paintVersionBox();
+ try{UP=await api("/api/update/check",{})}catch(e){UP={...UP,status:"error",error:e.message}}
+ paintVersionBox();if(UP.available)paintUpdate({available:true,version:UP.version,status:UP.status,progress:0});
+};
+
+/* ================= start ================= */
+if(location.hash.startsWith("#settings"))openSettings(location.hash.split("/")[1]);
+if(location.hash==="#update")openUpdate();
+setTab(tab);
+load();loadFiles();setInterval(load,4000);setInterval(loadFiles,4000);
+</script></body></html>

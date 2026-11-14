@@ -1,0 +1,144 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f13">
+<link rel="apple-touch-icon" href="/icon180.png">
+<title>اختصارات الآيفون</title>
+<style>
+:root{--bg:#0e0f13;--card:#171921;--line:#272a37;--text:#eceef4;--dim:#9a9fb0;--accent:#7cf29a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Roboto,sans-serif;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 40px)}
+a.back{color:var(--accent);text-decoration:none;font-size:15px}
+h1{font-size:24px;margin:12px 0 4px}
+.lead{color:var(--dim);margin:0 0 18px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+h2{font-size:17px;margin:0 0 10px}
+ol{margin:0;padding-inline-start:22px;padding-left:0}
+li{margin:10px 0;font-size:15px}
+li small{display:block;color:var(--dim);font-size:13px}
+b.a{background:#232634;border:1px solid var(--line);padding:1px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+.link{display:flex;gap:8px;margin-top:10px}
+.link input{direction:ltr;flex:1;min-width:0;background:#10121a;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font-size:13px}
+.link button{flex:none;background:var(--accent);color:#0e0f13;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:15px}
+.note{font-size:13px;color:var(--dim)}
+.opt{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.opt:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.jump a{font-size:14px;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);padding:8px 12px;border-radius:99px}
+.tag{display:inline-block;background:var(--accent);color:#0e0f13;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;margin-inline-start:6px;vertical-align:2px}
+</style></head><body><div class="wrap">
+<body><div class="wrap">
+<a class="back" href="/">&#8594; ClipDrop</a>
+<h1>اختصارات الآيفون</h1>
+<p class="lead">اختصارين اختياريين. كل واحد ياخذ دقائق تجهزه مرة وحدة. أسماء الأوامر مكتوبة بالعربي والإنجليزي حسب لغة جوالك.</p>
+<nav class="jump"><a href="#auto">📥 الإرسال التلقائي للصور</a><a href="#sendpc">📤 الإرسال للكمبيوتر من قائمة المشاركة</a></nav>
+
+<h1 id="auto" style="font-size:20px;margin-top:22px">📥 الإرسال التلقائي للصور</h1>
+<p class="lead">المقاطع الجديدة (والصور والفيديوهات اللي ترسلها من الكمبيوتر) تنزل في تطبيق الصور مباشرة بدون ما تفتح ClipDrop.</p>
+
+<div class="card">
+ <h2>رابطك</h2>
+ <div class="note">تلصقه وأنت تسوي الاختصار. خلّه خاص: أي أحد على الواي فاي معه الرابط يقدر ياخذ مقاطعك.</div>
+ <div class="link"><input id="lnk" readonly value="__INBOX__"><button class="cp" data-for="lnk">نسخ</button></div>
+</div>
+
+<div class="card">
+ <h2>١. سوِّ الاختصار</h2>
+ <ol>
+  <li>افتح تطبيق <b>الاختصارات</b> واضغط <b class="a">+</b> فوق.</li>
+  <li>اضغط الاسم فوق وسمّه <b>Get Clips</b>.</li>
+  <li>اضغط <b>البحث عن الإجراءات</b>، اكتب <b>URL</b>، واختر <b class="a">عنوان URL</b>. اضغط النص الأزرق و<b>الصق رابطك</b>.</li>
+  <li>ابحث عن <b class="a">الحصول على محتويات عنوان URL</b> <small>(Get Contents of URL)</small> واضغطه.</li>
+  <li>ابحث عن <b class="a">الحصول على قيمة القاموس</b> <small>(Get Dictionary Value)</small> واضغطه. اضغط <b>المفتاح</b> واكتب <b>clips</b>.</li>
+  <li>ابحث عن <b class="a">تكرار مع كل</b> <small>(Repeat with Each)</small> واضغطه.</li>
+  <li>ابحث عن <b class="a">الحصول على محتويات عنوان URL</b> مرة ثانية واضغطه. لازم يكون <b>داخل</b> التكرار.
+   <small>لازم يكون مكتوب: محتويات «عنصر التكرار» (Repeat Item). إذا لا، اضغط الجزء الأزرق واختر عنصر التكرار.</small></li>
+  <li>ابحث عن <b class="a">حفظ في ألبوم الصور</b> <small>(Save to Photo Album)</small> واضغطه. يكون داخل التكرار تحت الخطوة السابقة.</li>
+  <li>اضغط <b>تم</b>.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>٢. جرّبه</h2>
+ <ol>
+  <li>اضغط <b>Get Clips</b> مرة. اسمح بكل شيء يطلبه: <b>الشبكة المحلية</b>، الاتصال بالكمبيوتر (<b>السماح دائمًا</b>)، و<b>الصور</b>.
+   <small>أول تشغيل يحفظ قائمة المقاطع اللي عندك بس، فما ينزل شيء. هذا طبيعي.</small></li>
+  <li>احفظ مقطع جديد في الكمبيوتر (Ctrl+F9) وانتظر ثواني.</li>
+  <li>اضغط <b>Get Clips</b> مرة ثانية. المفروض المقطع يكون في الصور.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>٣. خلّه تلقائي</h2>
+ <div class="opt"><b>لما تفتح الصور</b><span class="tag">الأفضل</span>
+  <ol>
+   <li>في الاختصارات اضغط <b>الأتمتة</b> تحت، ثم <b class="a">+</b>.</li>
+   <li>اختر <b>التطبيق</b>، اختر <b>الصور</b>، وفعّل <b>عند الفتح</b>.</li>
+   <li>اختر <b>التشغيل فورًا</b>، اضغط التالي، واختر <b>Get Clips</b>.</li>
+  </ol>
+  <div class="note">افتح الصور بعد اللعب وبتلقى مقاطعك الجديدة بعد ثواني.</div>
+ </div>
+ <div class="opt"><b>النقر على ظهر الآيفون</b>
+  <ol><li>الإعدادات ← تسهيلات الاستخدام ← اللمس ← <b>النقر على الظهر</b> ← نقرتان ← اختر <b>Get Clips</b>.</li></ol>
+ </div>
+ <div class="opt"><b>لما توصل البيت</b>
+  <ol><li>أتمتة جديدة ← <b>Wi-Fi</b> ← اختر شبكة البيت ← التشغيل فورًا ← <b>Get Clips</b>.</li></ol>
+ </div>
+ <div class="opt"><b>زر على الشاشة الرئيسية</b>
+  <ol><li>في الاختصارات اضغط مطولًا على <b>Get Clips</b> ← مشاركة ← <b>إضافة إلى الشاشة الرئيسية</b>.</li></ol>
+ </div>
+</div>
+
+<h1 id="sendpc" style="font-size:20px;margin-top:34px">📤 الإرسال للكمبيوتر من قائمة المشاركة</h1>
+<p class="lead">يضيف <b>Send to PC</b> لقائمة المشاركة في الصور والملفات وغيرها، ويرسل الملف الأصلي بجودته الكاملة. (اختيار الصور من داخل ClipDrop يشتغل بعد، لكن الآيفون ممكن يصغّر الفيديوهات بهالطريقة.)</p>
+
+<div class="card">
+ <h2>رابط الإرسال</h2>
+ <div class="note">تلصقه وأنت تسوي الاختصار. آخر الرابط (device=iPhone) هو الاسم اللي يظهر في الكمبيوتر، وتقدر تغيّره.</div>
+ <div class="link"><input id="up" readonly value="__UPLOAD__"><button class="cp" data-for="up">نسخ</button></div>
+</div>
+
+<div class="card">
+ <h2>١. سوِّ الاختصار</h2>
+ <ol>
+  <li>في <b>الاختصارات</b> اضغط <b class="a">+</b> وسمّه <b>Send to PC</b>.</li>
+  <li>اضغط <b class="a">ⓘ</b> تحت وفعّل <b>إظهار في ورقة المشاركة</b> <small>(Show in Share Sheet)</small>. اضغط تم.</li>
+  <li>ابحث عن <b class="a">تكرار مع كل</b> واضغطه. لازم يكون مكتوب: كل عنصر في <b>مدخلات الاختصار</b> (Shortcut Input).</li>
+  <li>ابحث عن <b class="a">الحصول على محتويات عنوان URL</b> واضغطه. يكون <b>داخل</b> التكرار.</li>
+  <li>اضغط <b>عنوان URL</b> الأزرق و<b>الصق رابط الإرسال</b>.</li>
+  <li>اضغط السهم <b class="a">&#8249;</b> عشان تظهر خيارات أكثر:
+   <small>الطريقة: <b>POST</b> · نص الطلب: <b>ملف</b> (File) · الملف: <b>عنصر التكرار</b> (Repeat Item)</small></li>
+  <li>اضغط <b>تم</b>.</li>
+ </ol>
+</div>
+
+<div class="card">
+ <h2>٢. استخدمه</h2>
+ <ol>
+  <li>في الصور حدد صورة أو أكثر واضغط <b>مشاركة</b>.</li>
+  <li>انزل تحت واضغط <b>Send to PC</b>. أول مرة اسمح له يتصل بالكمبيوتر (<b>السماح دائمًا</b>).</li>
+  <li>تظهر في تبويب <b>الملفات</b> بعلامة <b>من iPhone</b>، وفي <code dir="ltr">Downloads\ClipDrop Shared</code> على الكمبيوتر.</li>
+ </ol>
+ <div class="note">الفيديوهات الكبيرة تاخذ شوي. خلّ الجوال صاحي لين يخلص.</div>
+</div>
+
+<div class="card">
+ <h2>إذا ما اشتغل</h2>
+ <ol>
+  <li>لازم ClipDrop يكون شغّال في الكمبيوتر، والجوال على نفس الواي فاي.</li>
+  <li>إذا تغيّر عنوان الكمبيوتر (بعد إعادة تشغيل الراوتر)، افتح هذي الصفحة مرة ثانية، انسخ الرابط الجديد، والصقه في خطوة الرابط بالاختصار.</li>
+  <li>الإعدادات ← الخصوصية والأمن ← <b>الشبكة المحلية</b> ← تأكد إن <b>الاختصارات</b> مفعّل.</li>
+ </ol>
+</div>
+</div>
+<script>
+document.querySelectorAll(".cp").forEach(function(btn){btn.onclick=function(){
+ var i=document.getElementById(btn.dataset.for),b=btn;
+ i.focus();i.setSelectionRange(0,i.value.length);
+ var ok=false;try{ok=document.execCommand("copy")}catch(e){}
+ if(!ok&&navigator.clipboard){navigator.clipboard.writeText(i.value).then(function(){b.textContent="تم النسخ"});return}
+ b.textContent=ok?"تم النسخ":"حدد وانسخ";
+ setTimeout(function(){b.textContent="نسخ"},2000);
+}});
+</script>
+</body></html>
