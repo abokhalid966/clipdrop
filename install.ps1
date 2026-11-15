@@ -100,7 +100,7 @@ $st.Save()
 Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
 Step 'Starting ClipDrop'
-Write-Output 'Look for the green icon by the clock. A QR code page opens for your iPhone.'
+Write-Output 'Look for the orange icon by the clock. A QR code page opens for your iPhone.'
 Write-Output 'If Windows asks about the firewall, tick PRIVATE networks and click Allow.'
 Start-Process (Join-Path $env:WINDIR 'System32\wscript.exe') -ArgumentList ('"' + (Join-Path $here 'ClipDrop.vbs') + '"')
 Start-Sleep -Seconds 4

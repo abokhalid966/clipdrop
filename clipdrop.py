@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.2"
+VERSION = "5.3"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -1236,7 +1236,8 @@ def make_handler(app):
             self.send_response(code)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(data)))
-            self.send_header("Cache-Control", "no-store")
+            if "Cache-Control" not in (extra or {}):
+                self.send_header("Cache-Control", "no-store")
             for k, v in (extra or {}).items():
                 self.send_header(k, v)
             self.end_headers()
@@ -1281,6 +1282,11 @@ def make_handler(app):
                 return self._send(200, page.replace("__URL__", html.escape(app.public_url)))
             if url.path == "/i18n.js":
                 return self._send(200, (WEB_DIR / "i18n.js").read_bytes(), "text/javascript; charset=utf-8")
+            if (len(parts) == 2 and parts[0] == "fonts" and re.fullmatch(r"[a-z0-9-]+\.(woff2|css)", parts[1])
+                    and (WEB_DIR / "fonts" / parts[1]).is_file()):
+                ctype = "font/woff2" if parts[1].endswith(".woff2") else "text/css; charset=utf-8"
+                return self._send(200, (WEB_DIR / "fonts" / parts[1]).read_bytes(), ctype,
+                                  {"Cache-Control": "max-age=604800"})
             if url.path in ("/icon.png", "/icon180.png"):
                 return self._send(200, (WEB_DIR / url.path[1:]).read_bytes(), "image/png",
                                   {"Cache-Control": "max-age=86400"})
@@ -1570,25 +1576,25 @@ def make_handler(app):
 
 
 LOCKED_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
-<body style="background:#0e0f13;color:#ddd;font-family:system-ui;padding:40px;text-align:center">
+<link rel=stylesheet href="/fonts/fonts.css"><body style="background:#0d0c0a;color:#eee7da;font-family:'IBM Plex Sans','IBM Plex Sans Arabic',system-ui;padding:40px;text-align:center">
 <h2>ClipDrop</h2><p>Scan the QR code on your PC to connect.<br>(ClipDrop icon by the clock &rarr; Connect iPhone)</p></body>"""
 
 LOCKED_PAGE_AR = """<!doctype html><html dir=rtl lang=ar><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<body style="background:#0e0f13;color:#ddd;font-family:system-ui;padding:40px;text-align:center">
+<link rel=stylesheet href="/fonts/fonts.css"><body style="background:#0d0c0a;color:#eee7da;font-family:'IBM Plex Sans','IBM Plex Sans Arabic',system-ui;padding:40px;text-align:center">
 <h2>ClipDrop</h2><p>امسح رمز QR الظاهر على الكمبيوتر للربط.<br>(أيقونة ClipDrop بجانب الساعة &larr; ربط الجوال)</p></body></html>"""
 
 PAIR_PAGE = """<!doctype html><html><head><meta charset=utf-8><title>ClipDrop - connect your phone</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>body{background:#0e0f13;color:#eee;font-family:system-ui,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
-.box{text-align:center;max-width:460px;padding:20px}#qr{background:#fff;padding:16px;border-radius:12px;display:inline-block;margin:20px 0}
-code{background:#1c1e26;padding:6px 10px;border-radius:6px;font-size:15px;word-break:break-all}p,li{color:#aab;line-height:1.5}ol{text-align:left}
-a{color:#7cf29a}</style></head>
+<link rel=stylesheet href="/fonts/fonts.css"><style>body{background:#0d0c0a;color:#eee7da;font-family:'IBM Plex Sans',system-ui,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
+.box{text-align:center;max-width:460px;padding:20px}#qr{background:#fff;padding:16px;border-radius:4px;display:inline-block;margin:20px 0}
+code{background:#15130f;padding:6px 10px;border-radius:3px;font-size:15px;word-break:break-all}p,li{color:#9a9184;line-height:1.5}ol{text-align:left}
+a{color:#f0a53a}</style></head>
 <body><div class=box><h1>Connect your phone</h1>
 <div id=qr></div><p>Or type this into Safari:</p><code>__URL__</code>
 <ol><li>Your phone and PC must be on the same Wi-Fi.</li>
 <li>Open the camera and scan the code, then tap the link.</li>
 <li>In Safari tap Share &rarr; <b>Add to Home Screen</b> so ClipDrop opens like an app.</li>
-<li>Want clips to go straight into Photos? On your phone open ClipDrop &rarr; &#9881; &rarr; <b>Phone</b> &rarr; <b>Auto-send to Photos</b>.</li></ol>
+<li>Want clips to go straight into Photos? On your phone open ClipDrop &rarr; settings &rarr; <b>Phone</b> &rarr; <b>Auto-send to Photos</b>.</li></ol>
 <p><a href="/help">How to use ClipDrop</a></p></div>
 <script>try{new QRCode(document.getElementById('qr'),{text:"__URL__",width:240,height:240})}catch(e){document.getElementById('qr').remove()}</script>
 </body></html>"""
@@ -1596,16 +1602,16 @@ a{color:#7cf29a}</style></head>
 
 PAIR_PAGE_AR = """<!doctype html><html dir=rtl lang=ar><head><meta charset=utf-8><title>ClipDrop - ربط الجوال</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>body{background:#0e0f13;color:#eee;font-family:system-ui,Segoe UI,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
-.box{text-align:center;max-width:460px;padding:20px}#qr{background:#fff;padding:16px;border-radius:12px;display:inline-block;margin:20px 0}
-code{background:#1c1e26;padding:6px 10px;border-radius:6px;font-size:15px;word-break:break-all;direction:ltr;display:inline-block}p,li{color:#aab;line-height:1.7}ol{text-align:right}
-a{color:#7cf29a}</style></head>
+<link rel=stylesheet href="/fonts/fonts.css"><style>body{background:#0d0c0a;color:#eee7da;font-family:'IBM Plex Sans','IBM Plex Sans Arabic',system-ui,Segoe UI,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
+.box{text-align:center;max-width:460px;padding:20px}#qr{background:#fff;padding:16px;border-radius:4px;display:inline-block;margin:20px 0}
+code{background:#15130f;padding:6px 10px;border-radius:3px;font-size:15px;word-break:break-all;direction:ltr;display:inline-block}p,li{color:#9a9184;line-height:1.7}ol{text-align:right}
+a{color:#f0a53a}</style></head>
 <body><div class=box><h1>اربط جوالك</h1>
 <div id=qr></div><p>أو اكتب هذا الرابط في Safari:</p><code>__URL__</code>
 <ol><li>لازم يكون الجوال والكمبيوتر على نفس شبكة الواي فاي.</li>
 <li>افتح الكاميرا وامسح الرمز، ثم اضغط على الرابط.</li>
 <li>في Safari اضغط مشاركة &larr; <b>إضافة إلى الشاشة الرئيسية</b> عشان يفتح ClipDrop مثل التطبيق.</li>
-<li>تبي المقاطع تنزل في الصور تلقائيًا؟ في الجوال افتح ClipDrop &larr; &#9881; &larr; <b>الجوال</b> &larr; <b>الإرسال التلقائي للصور</b>.</li></ol>
+<li>تبي المقاطع تنزل في الصور تلقائيًا؟ في الجوال افتح ClipDrop &larr; الإعدادات &larr; <b>الجوال</b> &larr; <b>الإرسال التلقائي للصور</b>.</li></ol>
 <p><a href="/help">طريقة استخدام ClipDrop</a></p></div>
 <script>try{new QRCode(document.getElementById('qr'),{text:"__URL__",width:240,height:240})}catch(e){document.getElementById('qr').remove()}</script>
 </body></html>"""

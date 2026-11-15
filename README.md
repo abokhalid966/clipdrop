@@ -31,7 +31,7 @@ No NVIDIA app, no account, no cloud. Your clips never leave your home.
 | 🎬 **Instant replay** | Always keeps the last moments ready. Press a hotkey to save them. Add as many hotkeys as you want, each with its own length (30 seconds, 2 minutes, …). |
 | 📱 **On your phone** | Open ClipDrop on your iPhone or Android over Wi-Fi. Watch, rename, trim, favorite and save clips. New clips can even go straight into your iPhone's Photos. |
 | ✂️ **Easy editing** | Keep a part or cut a part out, turn your voice and the game sound up or down separately, or make a small copy for WhatsApp. |
-| 📁 **File sharing** | Send photos, videos or any file from your phone to the PC, or from the PC to your phone. Every file shows where it came from: 📱 **From iPhone** or 💻 **From PC**. |
+| 📁 **File sharing** | Send photos, videos or any file from your phone to the PC, or from the PC to your phone. Every file shows where it came from: your phone's name or **PC**. |
 | 🎮 **Game aware** | Clips are named after the game and sorted into folders. Record only while you play, and only the game window if you want. |
 | 🎞️ **Your quality** | H.264, HEVC or AV1, up to 4K and 144 fps, recorded with your graphics card (NVIDIA, AMD or Intel). |
 | 🌐 **English and Arabic** | The whole app, including the guide, in both languages, with a proper right-to-left layout. |
@@ -58,7 +58,7 @@ No NVIDIA app, no account, no cloud. Your clips never leave your home.
 1. **Download** [ClipDrop-Setup.exe](https://github.com/abokhalid966/clipdrop/raw/main/updates/ClipDrop-Setup.exe) and run it.
    If Windows says *"Windows protected your PC"*, click **More info** → **Run anyway**. (The setup isn't signed with a paid certificate. That's normal for small free apps.)
 2. Click through the setup. It needs no admin rights and downloads its own copy of Python and FFmpeg (about 150 MB) the first time.
-3. ClipDrop starts as a small green icon by the clock, and a **QR code** opens.
+3. ClipDrop starts as a small orange icon by the clock, and a **QR code** opens.
 4. **Scan it with your phone camera** (same Wi-Fi). In Safari tap **Share → Add to Home Screen** so ClipDrop opens like an app.
 5. If Windows asks about the firewall, tick **Private networks** and click **Allow**.
 
@@ -99,7 +99,7 @@ Open the **Files** tab.
 
 - **Phone → PC:** tap **Send to PC** and pick photos, videos or files. They arrive in `Downloads\ClipDrop Shared\From (your phone)`, and the PC shows a small pop-up.
 - **PC → phone:** drag files into the ClipDrop window, or right-click any file in Windows → **Send to** → **ClipDrop (send to phone)**. (On Windows 11, click *Show more options* first.)
-- Every file has a badge, 📱 **From iPhone** or 💻 **From PC**, and filter buttons show one side at a time.
+- Every file has a tag with where it came from (your phone's name or **PC**), and filter buttons show one side at a time.
 - For full-quality videos from iPhone, set up the **Send to PC** share-menu shortcut (Settings → Phone).
 </details>
 
@@ -141,7 +141,7 @@ Your settings, clips and files always stay. You can also check by hand (Settings
 <details>
 <summary><b>My phone can't connect</b></summary>
 
-- ClipDrop must be running (green icon by the clock) and both devices on the **same Wi-Fi**.
+- ClipDrop must be running (orange icon by the clock) and both devices on the **same Wi-Fi**.
 - Allow ClipDrop in the Windows firewall on **Private** networks (Start → *Allow an app through Windows Firewall* → tick Private for `pythonw`).
 - If your router restarted, right-click the icon → **Connect phone** and scan the new QR code.
 </details>

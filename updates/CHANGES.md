@@ -1,5 +1,29 @@
 # ClipDrop versions
 
+## 5.3
+
+**ClipDrop 5.3: a new look**
+- The whole app has a new design: warm black with one orange accent, cleaner lists and sharper buttons. Same buttons in the same places, so nothing to relearn.
+- The emoji are gone. Icons are simple line icons now.
+- New fonts (IBM Plex) for English and Arabic. They come with ClipDrop, so they work without internet.
+- On the phone, your newest clip is shown big and older clips are listed under it in a compact list.
+- The bottom button now says exactly what it does, like **Save last 30 s**, and on the PC it shows your hotkey.
+- Filters show how many clips or files each one has.
+- New orange app icon, also in the tray and the "Clip saved" pop-up in games.
+
+<div dir="rtl">
+
+**ClipDrop 5.3: شكل جديد**
+- التطبيق كله بتصميم جديد: أسود دافئ مع لون برتقالي واحد، قوائم أنظف وأزرار أوضح. نفس الأزرار في نفس أماكنها، ما تحتاج تتعلم شي من جديد.
+- شلنا الإيموجي. الأيقونات صارت خطوط بسيطة.
+- خطوط جديدة (IBM Plex) للعربي والإنجليزي. تجي مع ClipDrop، فتشتغل بدون إنترنت.
+- في الجوال، آخر مقطع يطلع كبير والمقاطع الأقدم تحته في قائمة مرتبة.
+- الزر اللي تحت صار يقول وش يسوي بالضبط، مثل **احفظ آخر 30 ث**، وفي الكمبيوتر يوضح الاختصار.
+- الفلاتر توضح كم مقطع أو ملف في كل وحدة.
+- أيقونة برتقالية جديدة للتطبيق، وفي شريط المهام ورسالة «تم حفظ المقطع» داخل اللعبة.
+
+</div>
+
 ## 5.2
 
 **ClipDrop 5.2**

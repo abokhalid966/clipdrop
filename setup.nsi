@@ -4,7 +4,7 @@
 Unicode true
 !define APP "ClipDrop"
 !ifndef VERSION
-  !define VERSION "5.2"
+  !define VERSION "5.3"
 !endif
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP}"
 !ifndef OUTDIR
@@ -46,7 +46,7 @@ Var IsUpdate
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_TITLE "ClipDrop is ready"
-!define MUI_FINISHPAGE_TEXT "ClipDrop runs as a small green icon by the clock.$\r$\n$\r$\nPress Ctrl+F9 in a game to save the last 30 seconds.$\r$\n$\r$\nWhen it starts, a QR code opens: scan it with your phone to connect. If Windows asks about the firewall, tick Private networks and click Allow."
+!define MUI_FINISHPAGE_TEXT "ClipDrop runs as a small orange icon by the clock.$\r$\n$\r$\nPress Ctrl+F9 in a game to save the last 30 seconds.$\r$\n$\r$\nWhen it starts, a QR code opens: scan it with your phone to connect. If Windows asks about the firewall, tick Private networks and click Allow."
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_TEXT "Start ClipDrop now"
 !define MUI_FINISHPAGE_RUN_FUNCTION StartApp
@@ -90,6 +90,10 @@ Section "ClipDrop (required)" SecApp
   File "web\i18n.js"
   File "web\help.ar.html"
   File "web\shortcut.ar.html"
+  SetOutPath "$INSTDIR\web\fonts"
+  File "web\fonts\*.woff2"
+  File "web\fonts\fonts.css"
+  File "web\fonts\OFL.txt"
   SetOutPath "$INSTDIR"
 
   DetailPrint "Getting Python and FFmpeg (skipped if you already have them)..."

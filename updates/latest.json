@@ -1,8 +1,8 @@
 {
-  "version": "5.2",
-  "file": "ClipDrop-Setup-5.2.exe",
-  "size": 246227,
-  "sha256": "b63d0de54b4ab4b6722ff6fc4ba08f3f650d026b1a6b31a03a8f4dcf2c192251",
-  "notes_en": "**ClipDrop 5.2**\n- **Fixed:** after changing a hotkey or its length, the hotkey could stop working and show \"already used by another app\", even though ClipDrop itself was holding it.\n- If another app really is using your hotkey, ClipDrop now keeps trying and the hotkey starts working by itself as soon as the key is free.",
-  "notes_ar": "**ClipDrop 5.2**\n- **إصلاح:** بعد تغيير الاختصار أو مدته، كان الاختصار أحيانًا يوقف ويطلع «مستخدم من برنامج ثاني» مع إن ClipDrop نفسه هو اللي ماسكه.\n- إذا كان فيه برنامج ثاني فعلًا يستخدم اختصارك، ClipDrop يحاول مرة ثانية تلقائيًا ويشتغل الاختصار أول ما يفضى."
+  "version": "5.3",
+  "file": "ClipDrop-Setup-5.3.exe",
+  "size": 546340,
+  "sha256": "24867a289a6a8cd457d14a674d54a510340f4e30efdf02287bd067f14569fe1f",
+  "notes_en": "**ClipDrop 5.3: a new look**\n- The whole app has a new design: warm black with one orange accent, cleaner lists and sharper buttons. Same buttons in the same places, so nothing to relearn.\n- The emoji are gone. Icons are simple line icons now.\n- New fonts (IBM Plex) for English and Arabic. They come with ClipDrop, so they work without internet.\n- On the phone, your newest clip is shown big and older clips are listed under it in a compact list.\n- The bottom button now says exactly what it does, like **Save last 30 s**, and on the PC it shows your hotkey.\n- Filters show how many clips or files each one has.\n- New orange app icon, also in the tray and the \"Clip saved\" pop-up in games.",
+  "notes_ar": "**ClipDrop 5.3: شكل جديد**\n- التطبيق كله بتصميم جديد: أسود دافئ مع لون برتقالي واحد، قوائم أنظف وأزرار أوضح. نفس الأزرار في نفس أماكنها، ما تحتاج تتعلم شي من جديد.\n- شلنا الإيموجي. الأيقونات صارت خطوط بسيطة.\n- خطوط جديدة (IBM Plex) للعربي والإنجليزي. تجي مع ClipDrop، فتشتغل بدون إنترنت.\n- في الجوال، آخر مقطع يطلع كبير والمقاطع الأقدم تحته في قائمة مرتبة.\n- الزر اللي تحت صار يقول وش يسوي بالضبط، مثل **احفظ آخر 30 ث**، وفي الكمبيوتر يوضح الاختصار.\n- الفلاتر توضح كم مقطع أو ملف في كل وحدة.\n- أيقونة برتقالية جديدة للتطبيق، وفي شريط المهام ورسالة «تم حفظ المقطع» داخل اللعبة."
 }

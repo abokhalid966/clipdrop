@@ -372,8 +372,8 @@ def _overlay(text, seconds, ok):
                     ("hCursor", wintypes.HANDLE), ("hbrBackground", wintypes.HBRUSH),
                     ("lpszMenuName", wintypes.LPCWSTR), ("lpszClassName", wintypes.LPCWSTR)]
 
-    accent = 0x9AF27C if ok else 0x6B6BFF  # BGR: green / red
-    bg = 0x13100E
+    accent = 0x3AA5F0 if ok else 0x3C5AFF  # BGR: amber #f0a53a / red #ff5a3c
+    bg = 0x0A0C0D  # #0d0c0a
 
     def wndproc(hwnd, msg, wp, lp):
         if msg == WM_PAINT:
@@ -389,7 +389,7 @@ def _overlay(text, seconds, ok):
             font = gdi32.CreateFontW(-20, 0, 0, 0, 600, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
             old = gdi32.SelectObject(hdc, font)
             gdi32.SetBkMode(hdc, 1)
-            gdi32.SetTextColor(hdc, 0xFFFFFF)
+            gdi32.SetTextColor(hdc, 0xDAE7EE)  # #eee7da
             tr = wintypes.RECT(22, 0, W - 10, HGT)
             flags = 0x24 | 0x20 | 0x8000  # vcenter|singleline|ellipsis
             if any("\u0600" <= ch <= "\u06ff" for ch in text):
