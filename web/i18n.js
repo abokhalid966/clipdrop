@@ -15,10 +15,10 @@
     "Recording now": "يسجّل الآن", "Waiting for a game": "بانتظار لعبة", "Recording off": "التسجيل متوقف", "Starting…": "يبدأ…",
     "{n} clips": "{n} مقطع", "{size} free": "{size} متاح", "{n} selected": "تم تحديد {n}",
     "just now": "الآن", "{n} min ago": "قبل {n} د", "{n} h ago": "قبل {n} س",
-    "{m} min {s} s": "{m} د {s} ث", "{m} min": "{m} د", "{s} s": "{s} ث", "Last {len}": "آخر {len}",
+    "{m} min {s} s": "{m} د {s} ث", "{m} min": "{m} د", "{s} s": "{s} ث", "Last {len}": "آخر {len}", "Save last {len}": "احفظ آخر {len}", "Favorites": "المفضلة",
     "No clips match.": "لا توجد مقاطع مطابقة.", "No clips yet.": "لا توجد مقاطع بعد.",
-    "Press your hotkey on the PC ({key}) or tap Clip it to save the last moments of your game.":
-      "اضغط اختصارك على الكمبيوتر ({key}) أو اضغط «احفظ مقطع» لحفظ آخر لحظات لعبتك.",
+    "Press your hotkey on the PC ({key}) or tap the orange button below to save the last moments of your game.":
+      "اضغط اختصارك على الكمبيوتر ({key}) أو اضغط الزر البرتقالي تحت لحفظ آخر لحظات لعبتك.",
     "How it works": "طريقة العمل", "New clip saved": "تم حفظ مقطع جديد",
     "Select some first": "حدد شيئًا أولًا",
     "Delete {n} item(s)? This can't be undone.": "حذف {n}؟ لا يمكن التراجع عن هذا.",

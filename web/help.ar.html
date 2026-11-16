@@ -1,30 +1,44 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0e0f13">
+<meta name="theme-color" content="#0d0c0a">
+<link rel="stylesheet" href="/fonts/fonts.css">
 <link rel="apple-touch-icon" href="/icon180.png"><link rel="icon" href="/icon.png">
 <title>مساعدة ClipDrop</title>
 <style>
-:root{--bg:#0e0f13;--card:#171921;--line:#272a37;--text:#eceef4;--dim:#9a9fb0;--accent:#7cf29a;--gold:#ffd166}
+:root{--bg:#0d0c0a;--card:#15130f;--line:#2a261f;--line2:#3a352c;--text:#eee7da;--dim:#9a9184;--faint:#6b6357;--accent:#f0a53a;--gold:#f0a53a;
+--sans:"IBM Plex Sans","IBM Plex Sans Arabic",-apple-system,system-ui,"Segoe UI",sans-serif;--cond:"IBM Plex Sans Condensed","IBM Plex Sans Arabic","IBM Plex Sans",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Tahoma,Roboto,sans-serif;line-height:1.55}
-.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 50px)}
-a{color:var(--accent)}a.back{text-decoration:none;font-size:15px}
-h1{font-size:26px;margin:12px 0 4px}h1 b{color:var(--accent)}
-.lead{color:var(--dim);margin:0 0 10px;font-size:15px}
-nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
-nav a{font-size:13px;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:99px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0;scroll-margin-top:12px}
-h2{font-size:18px;margin:0 0 8px}
-h3{font-size:15px;margin:14px 0 4px}
-p{margin:6px 0;font-size:15px}
-ol,ul{margin:6px 0;padding-inline-start:22px;padding-left:0}li{margin:6px 0;font-size:15px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 60px)}
+a{color:var(--accent)}
+a.back{text-decoration:none;font:600 12px var(--cond);letter-spacing:.12em;text-transform:uppercase}
+[dir=rtl] a.back{letter-spacing:0;font:600 14px var(--sans)}
+h1{font:700 30px/1.15 var(--cond);margin:22px 0 8px;letter-spacing:.01em}
+[dir=rtl] h1{font-family:var(--sans);font-size:27px}
+h1 b{color:var(--accent)}
+.lead{color:var(--dim);margin:0 0 14px;font-size:15.5px;max-width:600px}
+nav{display:flex;flex-wrap:wrap;gap:4px 18px;margin:18px 0 8px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+nav a{font-size:13.5px;text-decoration:none;color:var(--dim)}
+nav a:hover{color:var(--accent)}
+.card{border-top:1px solid var(--line);padding:26px 0 8px;margin:0;scroll-margin-top:12px}
+nav+.card{border-top:0}
+h2{font:600 21px/1.25 var(--cond);margin:0 0 10px;letter-spacing:.01em}
+[dir=rtl] h2{font-family:var(--sans);font-size:19px}
+h3{font-size:15px;margin:18px 0 4px}
+p{margin:8px 0;font-size:15px}
+ol,ul{margin:8px 0;padding-left:22px}li{margin:7px 0;font-size:15px}
+[dir=rtl] ol,[dir=rtl] ul{padding-left:0;padding-inline-start:22px}
+li::marker{color:var(--accent);font-family:var(--mono);font-size:13px}
 .dim{color:var(--dim);font-size:13.5px}
-kbd{background:#232634;border:1px solid #3a3e50;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-family:inherit;font-size:13px;font-weight:600;white-space:nowrap}
-code{direction:ltr;unicode-bidi:embed;background:#10121a;border:1px solid var(--line);border-radius:6px;padding:3px 7px;font-size:13px;word-break:break-all}
-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
-th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--dim);font-weight:600;font-size:12.5px}
-.tip{border-inline-start:3px solid var(--gold);padding:6px 12px;background:rgba(255,209,102,.06);border-radius:8px;margin:10px 0;font-size:14px}
+kbd{background:var(--card);border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:1px 6px;font:500 12.5px var(--mono);white-space:nowrap;text-transform:uppercase}
+code{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:2px 6px;font:400 12.5px var(--mono);word-break:break-all}
+[dir=rtl] code{direction:ltr;unicode-bidi:embed}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{text-align:start;padding:10px 8px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+[dir=rtl] th,[dir=rtl] td{padding:10px 0 10px 8px}
+th{color:var(--faint);font:400 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+[dir=rtl] th{font:500 12.5px var(--sans);letter-spacing:0}
+.tip{border-inline-start:2px solid var(--accent);padding:4px 14px;margin:14px 0;font-size:14px;color:var(--dim)}
 </style></head><body><div class="wrap">
 <a class="back" href="/">&#8594; المقاطع</a>
 <h1>طريقة استخدام Clip<b>Drop</b></h1>
@@ -34,7 +48,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <div class="card" id="start"><h2>١. البداية</h2>
 <ol>
  <li>شغّل <b>ClipDrop-Setup.exe</b> مرة واحدة. يجهّز كل شيء ويضيف ClipDrop لقائمة ابدأ (وسطح المكتب إذا تبي). إذا ظهرت رسالة «Windows protected your PC» اضغط <b>More info</b> ثم <b>Run anyway</b>.</li>
- <li>ClipDrop يعيش جنب الساعة (أسفل يمين الشاشة) كأيقونة خضراء صغيرة. ممكن تكون مخفية تحت السهم <b>^</b>.</li>
+ <li>ClipDrop يعيش جنب الساعة (أسفل يمين الشاشة) كأيقونة برتقالية صغيرة. ممكن تكون مخفية تحت السهم <b>^</b>.</li>
  <li>اضغط على الأيقونة بالزر الأيمن للقائمة: فتح ClipDrop، حفظ مقطع الآن، التسجيل، إرسال ملفات للجوال، ربط الجوال، فتح المجلدات، المساعدة، إغلاق.</li>
  <li>إذا سألك ويندوز عن الجدار الناري، اختر <b>Private networks</b> واضغط Allow. هذا يخلي جوالك يوصل للكمبيوتر على شبكة البيت.</li>
 </ol>
@@ -46,7 +60,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <ul>
  <li>بتسمع رنة قصيرة وتشوف <b>تم حفظ المقطع</b> في أعلى الشاشة.</li>
  <li>تبي مدد مختلفة؟ أضف اختصارات أكثر من الإعدادات، مثلًا <kbd>Ctrl</kbd> + <kbd>F10</kbd> لآخر دقيقتين.</li>
- <li>من الجوال اضغط <b>احفظ مقطع</b>. إذا عندك أكثر من مدة يسألك أي وحدة.</li>
+ <li>من الجوال اضغط الزر البرتقالي تحت (<b>احفظ آخر 30 ث</b>). إذا عندك أكثر من مدة يسألك أي وحدة.</li>
  <li>المقاطع تنحفظ في <code>Videos\ClipDrop</code> داخل مجلد باسم اللعبة.</li>
 </ul>
 <p class="dim">النقطة أعلى ClipDrop توضح الحالة: أحمر = يسجّل، أصفر = ينتظر لعبة، رمادي = متوقف.</p>
@@ -80,7 +94,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <li>في الجوال افتح تبويب الملفات واضغط <b>حفظ</b>. وإذا الإرسال التلقائي شغّال، الصور والفيديوهات تنزل في الصور مباشرة.</li>
 </ul>
 <h3>مين أرسل إيش</h3>
-<p>كل ملف عليه علامة: 📱 <b>من iPhone</b> (أو اسم جوالك) أو 💻 <b>من الكمبيوتر</b>. استخدم الأزرار تحت البحث عشان تعرض جهة وحدة بس. تقدر تسمّي كل جوال من الإعدادات ← الملفات والمشاركة.</p>
+<p>كل ملف عليه علامة في زاويته: اسم جوالك (مثل <b>iPhone</b>) أو <b>الكمبيوتر</b>. استخدم الأزرار تحت البحث عشان تعرض جهة وحدة بس. تقدر تسمّي كل جوال من الإعدادات ← الملفات والمشاركة.</p>
 </div>
 
 <div class="card" id="photos"><h2>٥. الإرسال التلقائي للصور (آيفون)</h2>
@@ -101,7 +115,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <tr><td><b>تعديل</b></td><td>اسحب المقبضين فوق شريط الصور. <b>إبقاء الجزء المحدد</b> يخلي هذا الجزء بس. <b>قص الجزء المحدد</b> يشيله ويوصل الباقي. إذا كان المايك شغّال تقدر ترفع أو تخفض صوتك وصوت اللعبة كل واحد لحاله. يحفظ نسخة «(edited)»، أو اختر <i>استبدال الأصلي</i>.</td></tr>
  <tr><td><b>حجم للمشاركة</b></td><td>يسوي نسخة صغيرة 720p (تقريبًا 15 ميجا أو أقل) تنرسل بسرعة على واتساب أو سناب. الأصلي يبقى مثل ما هو.</td></tr>
  <tr><td><b>حفظ</b></td><td>ينزّل المقطع بجودته الكاملة.</td></tr>
- <tr><td><b>★</b></td><td>يضيفه للمفضلة.</td></tr>
+ <tr><td><b>النجمة</b></td><td>يضيفه للمفضلة.</td></tr>
  <tr><td><b>حذف</b></td><td>يحذفه من الكمبيوتر نهائيًا.</td></tr>
 </table>
 </div>
@@ -110,7 +124,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <ul>
  <li><b>ابحث</b> بالاسم أو اللعبة.</li>
  <li><b>رتّب</b> حسب الأحدث، الأقدم، الأطول، الأقصر، الأكبر، الأصغر، الاسم أو اللعبة.</li>
- <li><b>فلتر</b> بالأزرار تحت البحث: كل المقاطع، ★ المفضلة، أو لعبة معيّنة.</li>
+ <li><b>فلتر</b> بالأزرار تحت البحث: كل المقاطع، المفضلة، أو لعبة معيّنة.</li>
  <li><b>تحديد</b> يخليك تختار مقاطع كثيرة مرة وحدة للمفضلة أو الإرسال للآيفون أو الحذف.</li>
  <li>الشريط فوق يوضح كم تاخذ مقاطعك من المساحة وكم باقي في القرص.</li>
 </ul>
@@ -127,7 +141,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 </div>
 
 <div class="card" id="settings"><h2>٩. الإعدادات</h2>
-<p>اضغط <b>⚙</b> فوق. الإعدادات مقسمة لأقسام (التسجيل، الفيديو، الاختصارات، الصوت، التنبيهات، المقاطع والألعاب، الملفات والمشاركة، الجوال، التحديثات، اللغة، التطبيق). استخدم البحث عشان تلقى أي خيار. كل خيار معه شرح قصير، وكل قسم فيه زر «إرجاع للافتراضي». أهمها:</p>
+<p>اضغط <b>زر الإعدادات</b> فوق على اليسار (رمز المنزلقين). الإعدادات مقسمة لأقسام (التسجيل، الفيديو، الاختصارات، الصوت، التنبيهات، المقاطع والألعاب، الملفات والمشاركة، الجوال، التحديثات، اللغة، التطبيق). استخدم البحث عشان تلقى أي خيار. كل خيار معه شرح قصير، وكل قسم فيه زر «إرجاع للافتراضي». أهمها:</p>
 <ul>
  <li><b>متى يسجّل:</b> دائمًا، أو فقط وقت اللعب.</li>
  <li><b>ماذا يسجّل:</b> الشاشة كاملة، أو نافذة اللعبة فقط عشان رسائل ديسكورد والإشعارات ما تطلع.</li>
@@ -135,7 +149,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <li><b>الاختصارات:</b> أضف قد ما تبي، كل واحد بمدة مختلفة.</li>
  <li><b>الصوت:</b> اختر السماعة والمايك اللي يتسجلون وحدد مستوى صوتهم.</li>
  <li><b>التنبيهات:</b> شغّل أو أطفئ الصوت والرسالة داخل اللعبة، وتنبيه وصول الملفات.</li>
- <li><b>التحديثات:</b> ClipDrop يبحث عن نسخ جديدة مرة كل يوم. إذا فيه وحدة جاهزة يطلع شريط أزرق فوق: اضغط <b>وش الجديد</b> ثم <b>حدّث الآن</b>. يقفل ثواني ويفتح مرة ثانية، وإعداداتك ومقاطعك وملفاتك تبقى. وتقدر تخلي التحديثات تتثبت لحالها.</li>
+ <li><b>التحديثات:</b> ClipDrop يبحث عن نسخ جديدة مرة كل يوم. إذا فيه وحدة جاهزة يطلع شريط برتقالي فوق: اضغط <b>وش الجديد</b> ثم <b>حدّث الآن</b>. يقفل ثواني ويفتح مرة ثانية، وإعداداتك ومقاطعك وملفاتك تبقى. وتقدر تخلي التحديثات تتثبت لحالها.</li>
  <li><b>اللغة:</b> عربي أو إنجليزي. «تلقائي» يخلي كل جهاز بلغته.</li>
  <li><b>الألعاب:</b> ClipDrop يعتبر أي برنامج يملأ الشاشة لعبة. تقدر تضيف ألعاب ما تعرّف عليها (مثل لعبة بنافذة)، أو برامج مو ألعاب.</li>
 </ul>

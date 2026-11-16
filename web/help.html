@@ -1,30 +1,44 @@
 <!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0e0f13">
+<meta name="theme-color" content="#0d0c0a">
+<link rel="stylesheet" href="/fonts/fonts.css">
 <link rel="apple-touch-icon" href="/icon180.png"><link rel="icon" href="/icon.png">
 <title>ClipDrop help</title>
 <style>
-:root{--bg:#0e0f13;--card:#171921;--line:#272a37;--text:#eceef4;--dim:#9a9fb0;--accent:#7cf29a;--gold:#ffd166}
+:root{--bg:#0d0c0a;--card:#15130f;--line:#2a261f;--line2:#3a352c;--text:#eee7da;--dim:#9a9184;--faint:#6b6357;--accent:#f0a53a;--gold:#f0a53a;
+--sans:"IBM Plex Sans","IBM Plex Sans Arabic",-apple-system,system-ui,"Segoe UI",sans-serif;--cond:"IBM Plex Sans Condensed","IBM Plex Sans Arabic","IBM Plex Sans",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;line-height:1.55}
-.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 50px)}
-a{color:var(--accent)}a.back{text-decoration:none;font-size:15px}
-h1{font-size:26px;margin:12px 0 4px}h1 b{color:var(--accent)}
-.lead{color:var(--dim);margin:0 0 10px;font-size:15px}
-nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
-nav a{font-size:13px;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:99px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0;scroll-margin-top:12px}
-h2{font-size:18px;margin:0 0 8px}
-h3{font-size:15px;margin:14px 0 4px}
-p{margin:6px 0;font-size:15px}
-ol,ul{margin:6px 0;padding-left:22px}li{margin:6px 0;font-size:15px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 60px)}
+a{color:var(--accent)}
+a.back{text-decoration:none;font:600 12px var(--cond);letter-spacing:.12em;text-transform:uppercase}
+[dir=rtl] a.back{letter-spacing:0;font:600 14px var(--sans)}
+h1{font:700 30px/1.15 var(--cond);margin:22px 0 8px;letter-spacing:.01em}
+[dir=rtl] h1{font-family:var(--sans);font-size:27px}
+h1 b{color:var(--accent)}
+.lead{color:var(--dim);margin:0 0 14px;font-size:15.5px;max-width:600px}
+nav{display:flex;flex-wrap:wrap;gap:4px 18px;margin:18px 0 8px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+nav a{font-size:13.5px;text-decoration:none;color:var(--dim)}
+nav a:hover{color:var(--accent)}
+.card{border-top:1px solid var(--line);padding:26px 0 8px;margin:0;scroll-margin-top:12px}
+nav+.card{border-top:0}
+h2{font:600 21px/1.25 var(--cond);margin:0 0 10px;letter-spacing:.01em}
+[dir=rtl] h2{font-family:var(--sans);font-size:19px}
+h3{font-size:15px;margin:18px 0 4px}
+p{margin:8px 0;font-size:15px}
+ol,ul{margin:8px 0;padding-left:22px}li{margin:7px 0;font-size:15px}
+[dir=rtl] ol,[dir=rtl] ul{padding-left:0;padding-inline-start:22px}
+li::marker{color:var(--accent);font-family:var(--mono);font-size:13px}
 .dim{color:var(--dim);font-size:13.5px}
-kbd{background:#232634;border:1px solid #3a3e50;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-family:inherit;font-size:13px;font-weight:600;white-space:nowrap}
-code{background:#10121a;border:1px solid var(--line);border-radius:6px;padding:3px 7px;font-size:13px;word-break:break-all}
-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
-th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--dim);font-weight:600;font-size:12.5px}
-.tip{border-left:3px solid var(--gold);padding:6px 12px;background:rgba(255,209,102,.06);border-radius:0 8px 8px 0;margin:10px 0;font-size:14px}
+kbd{background:var(--card);border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:1px 6px;font:500 12.5px var(--mono);white-space:nowrap;text-transform:uppercase}
+code{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:2px 6px;font:400 12.5px var(--mono);word-break:break-all}
+[dir=rtl] code{direction:ltr;unicode-bidi:embed}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{text-align:start;padding:10px 8px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+[dir=rtl] th,[dir=rtl] td{padding:10px 0 10px 8px}
+th{color:var(--faint);font:400 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+[dir=rtl] th{font:500 12.5px var(--sans);letter-spacing:0}
+.tip{border-inline-start:2px solid var(--accent);padding:4px 14px;margin:14px 0;font-size:14px;color:var(--dim)}
 </style></head><body><div class="wrap">
 <a class="back" href="/">&#8592; Clips</a>
 <h1>How to use Clip<b>Drop</b></h1>
@@ -34,7 +48,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <div class="card" id="start"><h2>1. Getting started</h2>
 <ol>
  <li>Run <b>ClipDrop-Setup.exe</b> once. It sets everything up and adds ClipDrop to your Start Menu (and Desktop if you want). If Windows says "Windows protected your PC", click <b>More info</b> then <b>Run anyway</b>.</li>
- <li>ClipDrop lives by the clock (bottom right of the taskbar) as a small green icon. It may be hidden under the <b>^</b> arrow.</li>
+ <li>ClipDrop lives by the clock (bottom right of the taskbar) as a small orange icon. It may be hidden under the <b>^</b> arrow.</li>
  <li>Right-click the icon for the menu: Open ClipDrop, Save clip now, Recording on/off, Connect phone, Open clips folder, Help, Quit.</li>
  <li>If Windows asks about the firewall, tick <b>Private networks</b> and click Allow. That lets your phone reach your PC on your home Wi-Fi.</li>
 </ol>
@@ -46,7 +60,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <ul>
  <li>You hear a short ding and see <b>Clip saved</b> in the top-right corner.</li>
  <li>Want different lengths? Add more hotkeys in Settings, for example <kbd>Ctrl</kbd> + <kbd>F10</kbd> for the last 2 minutes.</li>
- <li>On your phone, tap <b>Clip it</b> to save from there. With several lengths, it asks which one.</li>
+ <li>On your phone, tap the orange button at the bottom (<b>Save last 30 s</b>) to save from there. With several lengths, it asks which one.</li>
  <li>Clips are saved in <code>Videos\ClipDrop</code>, in a folder named after the game.</li>
 </ul>
 <p class="dim">The dot at the top of ClipDrop shows what's going on: red = recording, yellow = waiting for a game, grey = off.</p>
@@ -80,7 +94,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <li>On the phone, open the Files tab and tap <b>Save</b>. With auto-send on, photos and videos go straight into Photos.</li>
 </ul>
 <h3>Who sent what</h3>
-<p>Every file has a badge: 📱 <b>From iPhone</b> (or your phone's name) or 💻 <b>From PC</b>. Use the buttons under the search box to show only one side. You can name each phone in Settings → Files and sharing.</p>
+<p>Every file has a tag in its corner: your phone's name (like <b>iPhone</b>) or <b>PC</b>. Use the buttons under the search box to show only one side. You can name each phone in Settings → Files and sharing.</p>
 </div>
 
 <div class="card" id="photos"><h2>5. Auto-send to Photos (iPhone)</h2>
@@ -101,7 +115,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <tr><td><b>Edit</b></td><td>Drag the two handles over the picture strip. <b>Keep selection</b> keeps only that part. <b>Cut out selection</b> removes that part and joins the rest. If your mic was on, you can turn your voice and the game sound up or down separately. Saves an "(edited)" copy, or tick <i>Replace the original</i>.</td></tr>
  <tr><td><b>Share size</b></td><td>Makes a small 720p copy (around 15 MB or less) that sends fast on WhatsApp or Snapchat. The original stays as it is.</td></tr>
  <tr><td><b>Save</b></td><td>Downloads the full-quality clip.</td></tr>
- <tr><td><b>★</b></td><td>Adds it to Favorites.</td></tr>
+ <tr><td><b>Star</b></td><td>Adds it to Favorites.</td></tr>
  <tr><td><b>Delete</b></td><td>Deletes it from your PC for good.</td></tr>
 </table>
 </div>
@@ -110,7 +124,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 <ul>
  <li><b>Search</b> by name or game.</li>
  <li><b>Sort</b> by newest, oldest, longest, shortest, biggest, smallest, name or game.</li>
- <li><b>Filter</b> with the buttons under the search box: all clips, ★ Favorites, or one game.</li>
+ <li><b>Filter</b> with the buttons under the search box: all clips, Favorites, or one game.</li>
  <li><b>Select</b> lets you pick many clips at once to favorite, send to your iPhone, or delete.</li>
  <li>The bar at the top shows how much space your clips use and how much is left on the drive.</li>
 </ul>
@@ -127,7 +141,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
 </div>
 
 <div class="card" id="settings"><h2>9. Settings</h2>
-<p>Tap <b>⚙</b> at the top. Settings are grouped into sections (Recording, Video, Hotkeys, Sound, Alerts, Clips and games, Files and sharing, Phone, Updates, Language, App). Use the search box to find any option. Every option has a short explanation, and each section has a "Reset" button. The main ones:</p>
+<p>Tap the <b>settings button</b> at the top right (the two sliders). Settings are grouped into sections (Recording, Video, Hotkeys, Sound, Alerts, Clips and games, Files and sharing, Phone, Updates, Language, App). Use the search box to find any option. Every option has a short explanation, and each section has a "Reset" button. The main ones:</p>
 <ul>
  <li><b>When to record:</b> always, or only while a game is open.</li>
  <li><b>What to record:</b> the whole screen, or only the game window so Discord pop-ups and notifications stay out.</li>
@@ -135,7 +149,7 @@ th{color:var(--dim);font-weight:600;font-size:12.5px}
  <li><b>Hotkeys:</b> add as many as you like, each with its own length.</li>
  <li><b>Sound:</b> pick which speakers and mic to record, and set their volume.</li>
  <li><b>When a clip is saved:</b> turn the sound and the in-game message on or off.</li>
- <li><b>Updates:</b> ClipDrop checks for new versions once a day. When one is ready, a blue bar appears at the top: tap <b>What's new</b>, then <b>Update now</b>. It closes for a few seconds and opens again, and your settings, clips and files stay. You can also let updates install by themselves.</li>
+ <li><b>Updates:</b> ClipDrop checks for new versions once a day. When one is ready, an orange bar appears at the top: tap <b>What's new</b>, then <b>Update now</b>. It closes for a few seconds and opens again, and your settings, clips and files stay. You can also let updates install by themselves.</li>
  <li><b>Language:</b> English or Arabic. "Automatic" uses each device's own language.</li>
  <li><b>Games:</b> ClipDrop counts any program that fills the whole screen as a game. You can add games it misses (like one you play in a window), or list programs that aren't games.</li>
 </ul>
