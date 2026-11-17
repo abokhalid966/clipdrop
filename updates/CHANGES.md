@@ -1,5 +1,23 @@
 # ClipDrop versions
 
+## 5.5
+
+**ClipDrop 5.5: clearer updates**
+- "See update" in Settings now opens the update window on top, where you can see it. Before, it opened behind Settings.
+- While ClipDrop updates, a full-screen panel shows each step: downloading, installing, and starting the new version. It also shows up when an update installs by itself.
+- When the update is done, the page reloads by itself and says "Updated to ClipDrop 5.5". In games you get a pop-up when the update starts and when it's done.
+- If an update takes more than 3 minutes, you get a note telling you what to do.
+
+<div dir="rtl">
+
+**ClipDrop 5.5: تحديثات أوضح**
+- «شوف التحديث» في الإعدادات صار يفتح نافذة التحديث فوق، تقدر تشوفها. قبل كانت تنفتح ورا الإعدادات.
+- وقت التحديث تطلع شاشة كاملة توضح كل خطوة: التنزيل، التثبيت، وتشغيل النسخة الجديدة. وتطلع بعد لما التحديث يتثبت لحاله.
+- لما يخلص التحديث، الصفحة تتحدث لحالها وتقول «تم التحديث إلى ClipDrop 5.5». وداخل اللعبة يطلع لك تنبيه لما يبدأ التحديث ولما يخلص.
+- لو التحديث طوّل أكثر من 3 دقايق، يطلع لك تنبيه يقول لك وش تسوي.
+
+</div>
+
 ## 5.4
 
 **ClipDrop 5.4: fixes "sample rate not set" when saving a clip**
