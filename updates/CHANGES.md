@@ -1,5 +1,25 @@
 # ClipDrop versions
 
+## 5.4
+
+**ClipDrop 5.4: fixes "sample rate not set" when saving a clip**
+- If ClipDrop closed the wrong way (crash, Task Manager, sign-out), its recorder could keep running on its own and record video with no sound. Clips then failed with "sample rate not set". Now the recorder always closes together with ClipDrop, and ClipDrop stops any old recorder it finds when it starts.
+- Every recording uses its own buffer folder, so old pieces can't get mixed into a new clip.
+- If the sound or the video stops coming in, ClipDrop restarts the recording by itself.
+- If a clip has no sound in it, it's still saved (without sound) instead of failing.
+- The log now shows the real reason when the microphone can't be used.
+
+<div dir="rtl">
+
+**ClipDrop 5.4: إصلاح خطأ «sample rate not set» عند حفظ المقطع**
+- لو انقفل ClipDrop بطريقة غلط (تعليق، إدارة المهام، تسجيل خروج)، كان المسجل يكمل لحاله ويسجل فيديو بدون صوت، والمقاطع تفشل بخطأ «sample rate not set». الحين المسجل ينقفل دايم مع ClipDrop، وClipDrop يوقف أي مسجل قديم يلقاه أول ما يشتغل.
+- كل تسجيل له مجلد خاص، فما تختلط قطع قديمة بمقطع جديد.
+- لو وقف الصوت أو الفيديو، ClipDrop يعيد التسجيل من نفسه.
+- لو المقطع ما فيه صوت، ينحفظ بدون صوت بدل ما يفشل.
+- السجل يوضح السبب الحقيقي لو المايك ما اشتغل.
+
+</div>
+
 ## 5.3
 
 **ClipDrop 5.3: a new look**
