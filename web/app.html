@@ -269,6 +269,27 @@ body:after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(saf
 .shead h2{margin:0;font:700 22px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;flex:1}
 [dir=rtl] .shead h2{letter-spacing:0;font-family:var(--sans)}
 #upsheet .shead h2{text-transform:none;letter-spacing:.01em;font-size:24px}
+#upsheet{z-index:40} /* above Settings (30), where "See update" opens it */
+/* full-screen "Updating" panel */
+.upfull{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px 16px}
+.upfull.open{display:flex}
+.upfull .box{width:100%;max-width:440px;border:0;margin:0}
+.upfull h2{font-size:26px;margin:0 0 6px;border:0;padding:0;text-transform:none;letter-spacing:.01em}
+.upfull .help{margin:0 0 22px}
+.upsteps{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.upsteps li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);color:var(--dim);font-size:15px}
+.upsteps li .dot{width:18px;height:18px;flex:none;border:1.5px solid var(--line2);border-radius:50%;display:grid;place-items:center}
+.upsteps li.now{color:var(--text)}
+.upsteps li.now .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .9s linear infinite}
+.upsteps li.done{color:var(--text)}
+.upsteps li.done .dot{border-color:var(--accent);background:var(--accent)}
+.upsteps li.done .dot::after{content:"";width:5px;height:9px;border:solid var(--on);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.upsteps li .pct{margin-inline-start:auto;font-family:var(--mono);font-size:13px;color:var(--accent)}
+.upfull .uppb{margin-top:18px}
+.upfull .upmsg{margin-top:14px;min-height:1.4em}
+.upfull .btn{margin-top:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.upsteps li.now .dot{animation:none;border-top-color:var(--accent)}}
 .ssearch{width:100%;height:40px;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:0 12px;font-size:15px;outline:none;margin-bottom:10px}
 .ssearch:focus{border-color:var(--line2)}
 .catbtn{display:flex;align-items:baseline;gap:16px;width:100%;text-align:start;padding:13px 4px;border-bottom:1px solid var(--line);position:relative;transition:background-color .15s}
@@ -485,6 +506,20 @@ body:after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(saf
  <div class="upmsg" id="upmsg"></div>
  <button class="btn" id="upgo">Update now</button>
  <button class="btn ghost" id="uplater">Later</button>
+</div></div>
+
+<!-- full-screen panel while ClipDrop updates (it closes and opens again) -->
+<div class="upfull" id="upfull" role="dialog" aria-modal="true" aria-live="polite"><div class="box">
+ <h2 id="uftitle">Updating ClipDrop</h2>
+ <div class="help" id="ufsub">This can take up to 2 minutes. You don't need to do anything.</div>
+ <ol class="upsteps">
+  <li id="ufs1"><span class="dot"></span><span>Downloading</span><span class="pct" id="ufpct"></span></li>
+  <li id="ufs2"><span class="dot"></span><span>Installing. ClipDrop closes and opens again</span></li>
+  <li id="ufs3"><span class="dot"></span><span>Starting the new version</span></li>
+ </ol>
+ <div class="uppb" id="ufpb"><i id="ufpbi"></i></div>
+ <div class="upmsg" id="ufmsg"></div>
+ <button class="btn ghost hide" id="ufclose">Close</button>
 </div></div>
 
 <!-- ================= settings ================= -->
@@ -1186,6 +1221,7 @@ $("#ssave").onclick=async()=>{
 let UP={},upWaitVer=null;
 function paintUpdate(u){
  if(!u)return;
+ if((u.status==="downloading"||u.status==="installing")&&u.version)showUpFull(u.version); // also when it updates by itself
  const bar=$("#upbar");bar.classList.toggle("hide",!u.available);
  if(u.available)$("#upbart").textContent=u.status==="downloading"?T("Downloading update… {p}%",{p:u.progress}):u.status==="installing"?T("Installing update…"):T("ClipDrop {v} is ready",{v:u.version});
  if($("#upsheet").classList.contains("open")&&(u.status!==UP.status||u.progress!==UP.progress))refreshUpdate();
@@ -1215,14 +1251,49 @@ async function openUpdate(){await refreshUpdate();$("#upsheet").classList.add("o
 function closeUpdate(){$("#upsheet").classList.remove("open");if(location.hash==="#update")history.replaceState(null,"",location.pathname+location.search)}
 $("#upbarb").onclick=openUpdate;$("#upx").onclick=closeUpdate;$("#uplater").onclick=closeUpdate;
 $("#upsheet").addEventListener("click",e=>{if(e.target.id==="upsheet")closeUpdate()});
-$("#upgo").onclick=async()=>{try{await api("/api/update/install",{});setTimeout(refreshUpdate,400)}catch(e){toast(e.message,1)}};
-async function waitForNewVersion(){
- // ClipDrop restarts during the update: wait until the new version answers, then reload
- for(let i=0;i<120;i++){
-  await new Promise(r=>setTimeout(r,2000));
-  try{const d=await(await fetch("/api/clips",{cache:"no-store"})).json();if(d.status&&d.status.version===upWaitVer){location.reload();return}}catch(e){}
+$("#upgo").onclick=async()=>{const v=UP.version;try{await api("/api/update/install",{});closeUpdate();showUpFull(v)}catch(e){toast(e.message,1)}};
+function waitForNewVersion(){showUpFull(upWaitVer)}
+/* Full-screen "Updating" panel: follows the download, then waits while ClipDrop is
+   closed for the setup, then reloads once the new version answers. */
+let upFull=null;
+function ufStep(n,pct){
+ for(let i=1;i<=3;i++){const li=$("#ufs"+i);li.classList.toggle("done",i<n);li.classList.toggle("now",i===n)}
+ $("#ufpct").textContent=n===1&&pct!=null?pct+"%":"";
+ $("#ufpbi").style.width=(n===1?(pct||0)/3:n===2?50:85)+"%";
+}
+function showUpFull(ver){
+ if(upFull||!ver)return;
+ upFull={ver,start:Date.now(),wentDown:false};upWaitVer=ver;
+ try{sessionStorage.setItem("cd_updating",ver)}catch(e){}
+ $("#uftitle").textContent=T("Updating ClipDrop to {v}",{v:ver});
+ $("#ufmsg").textContent="";$("#ufmsg").classList.remove("err");$("#ufclose").classList.add("hide");
+ ufStep(1,0);$("#upfull").classList.add("open");
+ upFullLoop();
+}
+async function upFullLoop(){
+ const f=upFull;
+ while(upFull===f){
+  let u=null;
+  try{const r=await fetch("/api/update",{cache:"no-store"});if(r.ok)u=await r.json()}catch(e){}
+  if(!u){f.wentDown=true;ufStep(2)}                         // ClipDrop is closed while the setup runs
+  else if(u.current===f.ver){ufStep(3);await new Promise(r=>setTimeout(r,800));location.reload();return}
+  else if(u.status==="downloading")ufStep(1,u.progress||0);
+  else if(u.status==="installing")ufStep(2);
+  else if(u.status==="error"){upFailed(T(u.error||"Something went wrong"));return}
+  else if(f.wentDown){ufStep(3)}                            // back up, but still the old version: give it a moment
+  const secs=(Date.now()-f.start)/1000;
+  if(secs>180){$("#ufmsg").textContent=T("Still working… If nothing changes, close this page and open ClipDrop again.");$("#ufclose").classList.remove("hide")}
+  await new Promise(r=>setTimeout(r,1500));
  }
 }
+function upFailed(msg){
+ try{sessionStorage.removeItem("cd_updating")}catch(e){}
+ $("#ufmsg").textContent=msg;$("#ufmsg").classList.add("err");$("#ufclose").classList.remove("hide");
+}
+$("#ufclose").onclick=()=>{upFull=null;upWaitVer=null;$("#upfull").classList.remove("open");try{sessionStorage.removeItem("cd_updating")}catch(e){}};
+// after the reload: say it worked
+(function(){let v=null;try{v=sessionStorage.getItem("cd_updating");sessionStorage.removeItem("cd_updating")}catch(e){}
+ if(v)fetch("/api/update",{cache:"no-store"}).then(r=>r.json()).then(u=>{if(u.current===v){const t=$("#toast");toast(T("Updated to ClipDrop {v}",{v}));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),5000)}}).catch(()=>{})})();
 function paintVersionBox(){
  $("#vnow").textContent=T("ClipDrop {v}",{v:UP.current||status.version||""});
  $("#vstate").textContent=UP.status==="checking"?T("Checking…"):UP.status==="error"?T(UP.error||"Something went wrong"):UP.available?T("Version {v} is ready to install.",{v:UP.version}):UP.checked_at?T("You have the newest version."):"";

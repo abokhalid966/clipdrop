@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.4"
+VERSION = "5.5"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -126,6 +126,7 @@ TEXT_AR = {
     "ClipDrop {v} is ready": "ClipDrop {v} جاهز",
     "Open ClipDrop to see what's new and update.": "افتح ClipDrop لتشوف الجديد وتحدّث.",
     "Updating ClipDrop to {v}...": "جارٍ تحديث ClipDrop إلى {v}...",
+    "ClipDrop updated to {v}": "تم تحديث ClipDrop إلى {v}",
     "Sent to your phone: {n} file(s)": "جاهز لجوالك: {n} ملف",
     "ClipDrop isn't running and couldn't be started.": "ClipDrop لا يعمل وتعذّر تشغيله.",
 }
@@ -949,7 +950,9 @@ class Updater:
             print(f"Installing update {rel['version']} from {exe}")
             s = self.app.settings
             if s.get("overlay", True):
-                winutil.show_overlay(tr(s, "Updating ClipDrop to {v}...", v=rel["version"]), 3)
+                winutil.show_overlay(tr(s, "Updating ClipDrop to {v}...", v=rel["version"]), 4)
+            # the new version says "updated" when it starts (see announce_update)
+            (folder / "updating.txt").write_text(rel["version"], encoding="utf-8")
             if sys.platform == "win32":
                 flags = 0x00000008 | 0x00000200 | 0x01000000  # detached, new group, break away from job
                 args = [str(exe), "/S", "/UPDATE", f"/D={HERE}"]
@@ -963,8 +966,23 @@ class Updater:
             msg = str(e) if isinstance(e, RuntimeError) else "The update couldn't be downloaded. Check your internet and try again."
             self.state.update(status="error", error=msg)
 
+    def announce_update(self):
+        """Right after an update: show "ClipDrop updated to X" in game."""
+        mark = CACHE_DIR / "update" / "updating.txt"
+        try:
+            ver = mark.read_text(encoding="utf-8").strip()
+            mark.unlink()
+        except OSError:
+            return
+        if ver == VERSION:
+            print(f"Updated to {VERSION}")
+            if self.app.settings.get("overlay", True):
+                time.sleep(3)  # let the app finish starting
+                winutil.show_overlay(tr(self.app.settings, "ClipDrop updated to {v}", v=VERSION), 4)
+
     def loop(self):
         """Check at start (after a minute) and then once a day."""
+        self.announce_update()
         time.sleep(60)
         while True:
             if self.app.settings.get("update_check", True):

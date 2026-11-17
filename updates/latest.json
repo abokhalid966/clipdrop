@@ -1,8 +1,8 @@
 {
-  "version": "5.4",
-  "file": "ClipDrop-Setup-5.4.exe",
-  "size": 547803,
-  "sha256": "d93bb24e5289d881e880768b6a119a25cb2c35ac765d833c0f965fb44434136e",
-  "notes_en": "**ClipDrop 5.4: fixes \"sample rate not set\" when saving a clip**\n- If ClipDrop closed the wrong way (crash, Task Manager, sign-out), its recorder could keep running on its own and record video with no sound. Clips then failed with \"sample rate not set\". Now the recorder always closes together with ClipDrop, and ClipDrop stops any old recorder it finds when it starts.\n- Every recording uses its own buffer folder, so old pieces can't get mixed into a new clip.\n- If the sound or the video stops coming in, ClipDrop restarts the recording by itself.\n- If a clip has no sound in it, it's still saved (without sound) instead of failing.\n- The log now shows the real reason when the microphone can't be used.",
-  "notes_ar": "**ClipDrop 5.4: إصلاح خطأ «sample rate not set» عند حفظ المقطع**\n- لو انقفل ClipDrop بطريقة غلط (تعليق، إدارة المهام، تسجيل خروج)، كان المسجل يكمل لحاله ويسجل فيديو بدون صوت، والمقاطع تفشل بخطأ «sample rate not set». الحين المسجل ينقفل دايم مع ClipDrop، وClipDrop يوقف أي مسجل قديم يلقاه أول ما يشتغل.\n- كل تسجيل له مجلد خاص، فما تختلط قطع قديمة بمقطع جديد.\n- لو وقف الصوت أو الفيديو، ClipDrop يعيد التسجيل من نفسه.\n- لو المقطع ما فيه صوت، ينحفظ بدون صوت بدل ما يفشل.\n- السجل يوضح السبب الحقيقي لو المايك ما اشتغل."
+  "version": "5.5",
+  "file": "ClipDrop-Setup-5.5.exe",
+  "size": 549259,
+  "sha256": "3ff177e938713273fbb5762635212cb80e000e98b2d598eef78dc1fbb9fd490a",
+  "notes_en": "**ClipDrop 5.5: clearer updates**\n- \"See update\" in Settings now opens the update window on top, where you can see it. Before, it opened behind Settings.\n- While ClipDrop updates, a full-screen panel shows each step: downloading, installing, and starting the new version. It also shows up when an update installs by itself.\n- When the update is done, the page reloads by itself and says \"Updated to ClipDrop 5.5\". In games you get a pop-up when the update starts and when it's done.\n- If an update takes more than 3 minutes, you get a note telling you what to do.",
+  "notes_ar": "**ClipDrop 5.5: تحديثات أوضح**\n- «شوف التحديث» في الإعدادات صار يفتح نافذة التحديث فوق، تقدر تشوفها. قبل كانت تنفتح ورا الإعدادات.\n- وقت التحديث تطلع شاشة كاملة توضح كل خطوة: التنزيل، التثبيت، وتشغيل النسخة الجديدة. وتطلع بعد لما التحديث يتثبت لحاله.\n- لما يخلص التحديث، الصفحة تتحدث لحالها وتقول «تم التحديث إلى ClipDrop 5.5». وداخل اللعبة يطلع لك تنبيه لما يبدأ التحديث ولما يخلص.\n- لو التحديث طوّل أكثر من 3 دقايق، يطلع لك تنبيه يقول لك وش تسوي."
 }
