@@ -57,6 +57,83 @@ def log(msg):
     print(f"[recorder] {msg}", flush=True)
 
 
+# ---------------------------------------------------------------- FFmpeg housekeeping
+
+_job = None
+
+
+def _kill_with_us(proc):
+    """Windows: put FFmpeg in a job that closes when ClipDrop closes, so it can
+    never keep recording on its own after ClipDrop crashes or is ended."""
+    global _job
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        if _job is None:
+            job = k32.CreateJobObjectW(None, None)
+            if not job:
+                return
+
+            class IO(ctypes.Structure):
+                _fields_ = [(n, ctypes.c_ulonglong) for n in
+                            ("r", "w", "o", "rb", "wb", "ob")]
+
+            class BASIC(ctypes.Structure):
+                _fields_ = [("PerProcessUserTimeLimit", ctypes.c_longlong),
+                            ("PerJobUserTimeLimit", ctypes.c_longlong),
+                            ("LimitFlags", wintypes.DWORD),
+                            ("MinimumWorkingSetSize", ctypes.c_size_t),
+                            ("MaximumWorkingSetSize", ctypes.c_size_t),
+                            ("ActiveProcessLimit", wintypes.DWORD),
+                            ("Affinity", ctypes.c_size_t),
+                            ("PriorityClass", wintypes.DWORD),
+                            ("SchedulingClass", wintypes.DWORD)]
+
+            class EXT(ctypes.Structure):
+                _fields_ = [("BasicLimitInformation", BASIC), ("IoInfo", IO),
+                            ("ProcessMemoryLimit", ctypes.c_size_t),
+                            ("JobMemoryLimit", ctypes.c_size_t),
+                            ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                            ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+            info = EXT()
+            info.BasicLimitInformation.LimitFlags = 0x2000  # KILL_ON_JOB_CLOSE
+            if not k32.SetInformationJobObject(wintypes.HANDLE(job), 9, ctypes.byref(info), ctypes.sizeof(info)):
+                return
+            _job = job
+        k32.AssignProcessToJobObject(wintypes.HANDLE(_job), wintypes.HANDLE(int(proc._handle)))
+    except Exception as e:
+        log(f"Couldn't tie FFmpeg to ClipDrop: {e!r}")
+
+
+_leftovers_checked = False
+
+
+def kill_leftover_ffmpeg():
+    """Stop FFmpeg recorders left running by an earlier ClipDrop (one that crashed
+    or was ended). They keep writing into our buffer folder, without sound."""
+    global _leftovers_checked
+    if _leftovers_checked or sys.platform != "win32":
+        return
+    _leftovers_checked = True
+    ps = ("$me = %d; Get-CimInstance Win32_Process -Filter \"Name='ffmpeg.exe'\" | "
+          "Where-Object { $_.CommandLine -like '*\\ClipDrop\\buffer\\*' -and $_.ParentProcessId -ne $me } | "
+          "ForEach-Object { Write-Output $_.ProcessId; Stop-Process -Id $_.ProcessId -Force }") % os.getpid()
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps],
+                           capture_output=True, timeout=20, creationflags=NO_WINDOW)
+        pids = r.stdout.decode("utf-8", "replace").split()
+        if pids:
+            log(f"Stopped {len(pids)} old FFmpeg recorder(s) left running: {', '.join(pids)}")
+            time.sleep(0.5)  # let Windows release their files
+    except Exception as e:
+        log(f"Couldn't check for old FFmpeg recorders: {e!r}")
+
+
 def _encoder_works(ffmpeg, enc):
     try:
         r = subprocess.run(
@@ -193,6 +270,13 @@ class AudioPump:
         self.game_q = queue.Queue(maxsize=50) if (s.get("game_audio", True) and sc is not None) else None
         self.mic_q = queue.Queue(maxsize=50) if (self.want_mic and sc is not None) else None
         self.stop_evt = threading.Event()
+        self.thread = None
+        self.last_write = time.time()
+
+    def alive(self):
+        """False if the sound feed to FFmpeg stopped (FFmpeg then can't write anything)."""
+        return (self.thread is not None and self.thread.is_alive()
+                and time.time() - self.last_write < 5)
 
     def start(self):
         if sc is None:
@@ -201,7 +285,8 @@ class AudioPump:
             self._add_source(self.game_q, lambda: _find_speaker(self.speaker_name), "game sound")
         if self.mic_q is not None:
             self._add_source(self.mic_q, lambda: _find_mic(self.mic_name), "microphone")
-        threading.Thread(target=self._writer, daemon=True).start()
+        self.thread = threading.Thread(target=self._writer, daemon=True)
+        self.thread.start()
 
     def _add_source(self, q, get_dev, label):
         def run():
@@ -219,7 +304,7 @@ class AudioPump:
                         except queue.Full:
                             pass
             except Exception as e:
-                log(f"{label} unavailable: {e}")
+                log(f"{label} unavailable: {e!r}")
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -263,20 +348,26 @@ class AudioPump:
         silence = b"\x00" * (AUDIO_CHUNK * self.channels * 2)
         step = AUDIO_CHUNK / SAMPLE_RATE
         nxt = time.perf_counter()
+        warned = False
         while not self.stop_evt.is_set():
+            pcm = silence
             if np is not None and (self.game_q is not None or self.mic_q is not None):
-                game = self._take(self.game_q, AUDIO_CHUNK) * self.game_vol
-                if self.want_mic:
-                    frame = np.concatenate([game, self._take(self.mic_q, AUDIO_CHUNK) * self.mic_vol], axis=1)
-                else:
-                    frame = game
-                pcm = (np.clip(frame, -1, 1) * 32767).astype("<i2").tobytes()
-            else:
-                pcm = silence
+                try:
+                    game = self._take(self.game_q, AUDIO_CHUNK) * self.game_vol
+                    if self.want_mic:
+                        frame = np.concatenate([game, self._take(self.mic_q, AUDIO_CHUNK) * self.mic_vol], axis=1)
+                    else:
+                        frame = game
+                    pcm = (np.clip(frame, -1, 1) * 32767).astype("<i2").tobytes()
+                except Exception as e:  # never let a bad sound chunk stop the feed
+                    if not warned:
+                        log(f"Sound problem, using silence for now: {e!r}")
+                        warned = True
             try:
                 self.sink.write(pcm)
             except (BrokenPipeError, OSError, ValueError):
                 return
+            self.last_write = time.time()
             nxt += step
             delay = nxt - time.perf_counter()
             if delay > 0:
@@ -298,7 +389,10 @@ class Recorder:
         self.ffmpeg = ffmpeg
         self.buffer_seconds = int(buffer_seconds)
         self.target = target
-        self.buf_dir = Path(tempfile.gettempdir()) / "ClipDrop" / "buffer"
+        self.buf_root = Path(tempfile.gettempdir()) / "ClipDrop" / "buffer"
+        # each recorder gets its own folder, so pieces from another (or an old,
+        # left-over) recording can never end up in a clip
+        self.buf_dir = self.buf_root / f"run_{os.getpid()}_{int(time.time() * 1000)}"
         self.out_dir = Path(os.path.expandvars(os.path.expanduser(settings["save_folder"])))
         self.proc = None
         self.audio = None
@@ -370,11 +464,28 @@ class Recorder:
                 "-reset_timestamps", "1", pattern]
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE,
                                      creationflags=NO_WINDOW)
+        _kill_with_us(self.proc)
         self.audio = AudioPump(self.proc.stdin, self.s)
         self.audio.start()
 
+    def _clear_old_buffers(self):
+        """Delete pieces left by earlier recordings (skips files still in use)."""
+        if not self.buf_root.exists():
+            return
+        for p in self.buf_root.iterdir():
+            if p == self.buf_dir:
+                continue
+            if p.is_dir():
+                shutil.rmtree(p, ignore_errors=True)
+            else:
+                try:
+                    p.unlink()
+                except OSError:
+                    pass
+
     def start(self):
-        shutil.rmtree(self.buf_dir, ignore_errors=True)
+        kill_leftover_ffmpeg()
+        self._clear_old_buffers()
         self.buf_dir.mkdir(parents=True, exist_ok=True)
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.encoder = pick_encoder(self.ffmpeg, self.s.get("video_format", "h264"), self.s.get("encoder", "auto"))
@@ -395,6 +506,14 @@ class Recorder:
             self.running = True
             while self.proc.poll() is None and not self._stop.is_set():
                 self._cleanup()
+                problem = self._stalled(started)
+                if problem:
+                    log(f"Recording got stuck ({problem}), restarting it")
+                    try:
+                        self.proc.kill()
+                    except Exception:
+                        pass
+                    break
                 time.sleep(1)
             self.running = False
             if self.audio:
@@ -407,6 +526,21 @@ class Recorder:
             if time.time() - started < 10 and mi < len(modes) - 1:
                 mi += 1  # failed quickly: try the next capture method
             time.sleep(2)
+
+    def _stalled(self, started):
+        """Why the running FFmpeg looks stuck, or '' if it's fine."""
+        if time.time() - started < 20:
+            return ""
+        if self.audio and not self.audio.alive():
+            return "the sound feed stopped"
+        segs = self._segments()
+        try:
+            newest = segs[-1].stat().st_mtime if segs else started
+        except OSError:
+            return ""
+        if time.time() - newest > 20:
+            return "no new video for 20 seconds"
+        return ""
 
     def _segments(self):
         return sorted(self.buf_dir.glob(f"seg_*.{self.seg_ext}"), key=lambda p: (p.stat().st_mtime, p.name))
@@ -449,13 +583,26 @@ class Recorder:
                 out = folder / f"{game or 'Clip'} {stamp} ({seconds}s).mp4"
             lst = self.buf_dir / "concat.txt"
             lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in segs), encoding="utf-8")
-            r = subprocess.run(
-                [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
-                 "-i", str(lst), "-map", "0", "-c", "copy"] + mp4_tag(self.encoder) +
-                ["-movflags", "+faststart", str(out)],
-                capture_output=True, timeout=120, creationflags=NO_WINDOW)
+            def join(maps):
+                return subprocess.run(
+                    [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
+                     "-i", str(lst)] + maps + ["-c", "copy"] + mp4_tag(self.encoder) +
+                    ["-movflags", "+faststart", str(out)],
+                    capture_output=True, timeout=120, creationflags=NO_WINDOW)
+
+            r = join(["-map", "0"])
             if r.returncode != 0 or not out.exists():
-                raise RuntimeError(r.stderr.decode("utf-8", "replace")[-400:] or "FFmpeg failed")
+                err = r.stderr.decode("utf-8", "replace")
+                # the pieces have sound tracks with no sound in them: keep the video
+                if "sample rate not set" in err or "incorrect codec parameters" in err:
+                    log("These pieces have no sound in them, saving the clip without sound")
+                    r = join(["-map", "0:v"])
+                    if r.returncode == 0 and out.exists():
+                        log(f"Saved {out.name} (no sound)")
+                        return out
+                    err = r.stderr.decode("utf-8", "replace")
+                out.unlink(missing_ok=True)
+                raise RuntimeError(err[-400:] or "FFmpeg failed")
             log(f"Saved {out.name}")
             return out
 
