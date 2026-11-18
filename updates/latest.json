@@ -1,8 +1,8 @@
 {
-  "version": "5.5",
-  "file": "ClipDrop-Setup-5.5.exe",
-  "size": 549259,
-  "sha256": "3ff177e938713273fbb5762635212cb80e000e98b2d598eef78dc1fbb9fd490a",
-  "notes_en": "**ClipDrop 5.5: clearer updates**\n- \"See update\" in Settings now opens the update window on top, where you can see it. Before, it opened behind Settings.\n- While ClipDrop updates, a full-screen panel shows each step: downloading, installing, and starting the new version. It also shows up when an update installs by itself.\n- When the update is done, the page reloads by itself and says \"Updated to ClipDrop 5.5\". In games you get a pop-up when the update starts and when it's done.\n- If an update takes more than 3 minutes, you get a note telling you what to do.",
-  "notes_ar": "**ClipDrop 5.5: تحديثات أوضح**\n- «شوف التحديث» في الإعدادات صار يفتح نافذة التحديث فوق، تقدر تشوفها. قبل كانت تنفتح ورا الإعدادات.\n- وقت التحديث تطلع شاشة كاملة توضح كل خطوة: التنزيل، التثبيت، وتشغيل النسخة الجديدة. وتطلع بعد لما التحديث يتثبت لحاله.\n- لما يخلص التحديث، الصفحة تتحدث لحالها وتقول «تم التحديث إلى ClipDrop 5.5». وداخل اللعبة يطلع لك تنبيه لما يبدأ التحديث ولما يخلص.\n- لو التحديث طوّل أكثر من 3 دقايق، يطلع لك تنبيه يقول لك وش تسوي."
+  "version": "5.6",
+  "file": "ClipDrop-Setup-5.6.exe",
+  "size": 550856,
+  "sha256": "d442c7c8eacdc49144005cc10e958ef32a01388b50354531f598645e9d0cc9e7",
+  "notes_en": "**ClipDrop 5.6: instant clip alert, softer sound**\n- The moment you press the clip hotkey, you hear the sound and see \"Saving clip...\" in the game. When the file is ready, the same message changes to \"Clip saved\". Before, both came only after the clip was written, a few seconds later.\n- The old sharp beep is gone. Pick a sound in Settings > Alerts: Soft click, Soft chime, or No sound. Tap Listen to hear it on the PC.\n- If a clip can't be saved, you hear two low notes and the message turns red.",
+  "notes_ar": "**ClipDrop 5.6: تنبيه فوري وصوت أخف**\n- أول ما تضغط اختصار الحفظ، تسمع الصوت ويطلع لك «جارٍ حفظ المقطع...» داخل اللعبة. ولما يجهز الملف، نفس الرسالة تتغير إلى «تم حفظ المقطع». قبل كانوا يطلعون بعد ما ينكتب المقطع، بعد كم ثانية.\n- راح الصوت الحاد القديم. اختر الصوت من الإعدادات > التنبيهات: نقرة خفيفة، رنة خفيفة، أو بدون صوت. اضغط «اسمع» عشان تسمعه على الكمبيوتر.\n- إذا ما انحفظ المقطع، بتسمع نغمتين منخفضتين والرسالة تصير حمراء."
 }

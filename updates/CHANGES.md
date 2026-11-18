@@ -1,5 +1,21 @@
 # ClipDrop versions
 
+## 5.6
+
+**ClipDrop 5.6: instant clip alert, softer sound**
+- The moment you press the clip hotkey, you hear the sound and see "Saving clip..." in the game. When the file is ready, the same message changes to "Clip saved". Before, both came only after the clip was written, a few seconds later.
+- The old sharp beep is gone. Pick a sound in Settings > Alerts: Soft click, Soft chime, or No sound. Tap Listen to hear it on the PC.
+- If a clip can't be saved, you hear two low notes and the message turns red.
+
+<div dir="rtl">
+
+**ClipDrop 5.6: تنبيه فوري وصوت أخف**
+- أول ما تضغط اختصار الحفظ، تسمع الصوت ويطلع لك «جارٍ حفظ المقطع...» داخل اللعبة. ولما يجهز الملف، نفس الرسالة تتغير إلى «تم حفظ المقطع». قبل كانوا يطلعون بعد ما ينكتب المقطع، بعد كم ثانية.
+- راح الصوت الحاد القديم. اختر الصوت من الإعدادات > التنبيهات: نقرة خفيفة، رنة خفيفة، أو بدون صوت. اضغط «اسمع» عشان تسمعه على الكمبيوتر.
+- إذا ما انحفظ المقطع، بتسمع نغمتين منخفضتين والرسالة تصير حمراء.
+
+</div>
+
 ## 5.5
 
 **ClipDrop 5.5: clearer updates**
