@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.5"
+VERSION = "5.6"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -76,7 +76,7 @@ DEFAULTS = {
     "mic_device": "",
     "mic_volume": 100,
     # feedback
-    "sound_on_save": True,
+    "save_sound": "click",       # click | chime | off  (plays the moment you press the hotkey)
     "overlay": True,
     # clips
     "name_by_game": True,
@@ -120,6 +120,7 @@ TEXT_AR = {
     "Quit ClipDrop": "إغلاق ClipDrop",
     "Clip saved  •  {secs}s": "تم حفظ المقطع  •  {secs} ث",
     "Couldn't save the clip": "تعذّر حفظ المقطع",
+    "Saving clip...": "جارٍ حفظ المقطع...",
     "{n} file(s) from {device}": "{n} ملف من {device}",
     "Check for updates": "البحث عن تحديثات",
     "Install update {v}": "تثبيت التحديث {v}",
@@ -166,7 +167,10 @@ def load_settings():
     # older versions had one hotkey + one clip length
     if "hotkey" in raw and "hotkeys" not in raw:
         s["hotkeys"] = [{"keys": raw["hotkey"], "seconds": int(raw.get("clip_seconds", 30))}]
-    for old in ("hotkey", "clip_seconds"):
+    # before 5.6 the clip sound was just on/off
+    if raw.get("sound_on_save") is False and "save_sound" not in raw:
+        s["save_sound"] = "off"
+    for old in ("hotkey", "clip_seconds", "sound_on_save"):
         s.pop(old, None)
     if not s.get("phone_key"):
         s["phone_key"] = secrets.token_urlsafe(6)
@@ -217,6 +221,8 @@ def clean_settings(new, current):
         raise ValueError("Unknown capture option")
     if out.get("language", "auto") not in ("auto", "en", "ar"):
         raise ValueError("Unknown language")
+    if out.get("save_sound", "click") not in winutil.SOUNDS:
+        raise ValueError("Unknown sound")
     if out.get("video_format", "h264") not in ("h264", "hevc", "av1"):
         raise ValueError("Unknown video format")
     if "bitrate" in out and not re.fullmatch(r"\d{1,3}(\.\d)?[MK]", out["bitrate"]):
@@ -1142,19 +1148,23 @@ class App:
 
     def save_clip_from_hotkey(self, seconds=None):
         s = self.settings
+        sound = s.get("save_sound", "click")
+        # answer the key press right away; writing the file takes a few seconds
+        if self.recorder:
+            winutil.play_sound(sound)
+            if s.get("overlay", True):
+                winutil.show_overlay(tr(s, "Saving clip..."), 15)
         try:
             p = self.save_clip(seconds)
-            if s.get("sound_on_save", True):
-                winutil.ding(True)
             if s.get("overlay", True):
                 winutil.show_overlay(tr(s, "Clip saved  •  {secs}s", secs=self.last_clip["seconds"]))
             return p
         except Exception as e:
             print(f"Could not save clip: {e}")
-            if s.get("sound_on_save", True):
-                winutil.ding(False)
+            if sound != "off":
+                winutil.play_sound("error")
             if s.get("overlay", True):
-                winutil.show_overlay(tr(s, "Couldn't save the clip"), ok=False)
+                winutil.show_overlay(tr(s, "Couldn't save the clip"), 3, ok=False)
 
     # --- info for the page
 
@@ -1452,6 +1462,12 @@ def make_handler(app):
                     s = dict(app.update_settings(body))
                     s.pop("phone_key", None)
                     return self._json({"ok": True, "settings": s})
+                if url.path == "/api/test_sound":
+                    name = str(body.get("name", ""))
+                    if name not in winutil.SOUNDS:
+                        raise ValueError("Unknown sound")
+                    winutil.play_sound(name)
+                    return self._json({"ok": True})
                 if url.path == "/api/update/check":
                     return self._json(app.updater.check())
                 if url.path == "/api/update/install":

@@ -347,6 +347,9 @@ body:after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(saf
 .hkrow{display:flex;gap:8px;margin-top:10px;align-items:center}
 .hkrow input{flex:1;min-width:0;margin-top:0!important;direction:ltr;font-family:var(--mono)!important;text-transform:uppercase;font-size:14px!important}
 .hkrow select{width:auto!important;margin-top:0!important}
+.sndrow{display:flex;gap:8px;align-items:center;margin-top:10px}
+.sndrow select{flex:1;margin-top:0!important}
+.sndrow .btn{margin-top:0;width:auto;min-height:42px;padding:0 16px;font-size:13px}
 .hkrow .rm{color:var(--faint);width:32px;height:32px;display:grid;place-items:center}
 @media(hover:hover){.hkrow .rm:hover{color:var(--red)}}
 .hkrow .rec{font-size:12.5px;border:1px solid var(--line2);border-radius:4px;height:42px;padding:0 10px;white-space:nowrap}
@@ -610,10 +613,15 @@ body:after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(saf
 
   <section class="cat" data-cat="alerts" data-name="Alerts" data-desc="Sounds and pop-ups">
    <div class="box">
-    <div class="item"><div class="lbl"><span>Play a sound when a clip is saved</span><input type="checkbox" class="sw" data-k="sound_on_save"></div>
-     <div class="help">A short ding when it's saved, or a buzz if something went wrong.</div></div>
+    <div class="item"><div class="lbl">Sound when you clip</div>
+     <div class="sndrow"><select data-k="save_sound" id="sndpick">
+      <option value="click">Soft click (recommended)</option>
+      <option value="chime">Soft chime</option>
+      <option value="off">No sound</option></select>
+      <button class="btn ghost" id="sndtest" type="button">Listen</button></div>
+     <div class="help">Plays on the PC the moment you press the hotkey. If the clip can't be saved, you hear two low notes.</div></div>
     <div class="item"><div class="lbl"><span>Show "Clip saved" in the game</span><input type="checkbox" class="sw" data-k="overlay"></div>
-     <div class="help">A small message in the top corner for 2 seconds. It never shows up in your clips. Works with borderless and windowed games. In exclusive fullscreen, Windows doesn't allow it, so you'll only hear the sound.</div></div>
+     <div class="help">A small message in the top corner. It says "Saving clip..." the moment you press the hotkey, then "Clip saved" for 2 seconds. It never shows up in your clips. Works with borderless and windowed games. In exclusive fullscreen, Windows doesn't allow it, so you'll only hear the sound.</div></div>
     <div class="item"><div class="lbl"><span>Tell me when files arrive on the PC</span><input type="checkbox" class="sw" data-k="notify_files"></div>
      <div class="help">A sound and a small pop-up on the PC when your phone sends files.</div></div>
    </div>
@@ -1139,6 +1147,7 @@ $("#hklist").addEventListener("click",e=>{
   window.addEventListener("keydown",onKey,true);
  }
 });
+$("#sndtest").onclick=async()=>{const v=$("#sndpick").value;if(v==="off")return;try{await api("/api/test_sound",{name:v})}catch(e){toast(e.message,1)}};
 $("#hkadd").onclick=()=>{if(hks.length>=8)return;const used=new Set(hks.map(h=>h.keys));let n=10;while(used.has("ctrl+f"+n)&&n<12)n++;hks.push({keys:"ctrl+f"+n,seconds:120});hkPaint()};
 function devOptions(list,cur){return `<option value="">${T("Windows default")}</option>`+list.map(d=>`<option value="${esc(d.name)}" ${d.name===cur?"selected":""}>${esc(d.name)}${d.default?" "+T("(default)"):""}</option>`).join("")}
 function fill(s,scope){

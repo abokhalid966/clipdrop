@@ -37,6 +37,9 @@ if IS_WIN:
     _sig(kernel32.GetModuleHandleW, H, wintypes.LPCWSTR)
     _sig(user32.BeginPaint, H, HW, ctypes.c_void_p)
     _sig(user32.EndPaint, wintypes.BOOL, HW, ctypes.c_void_p)
+    _sig(user32.PostMessageW, wintypes.BOOL, HW, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+    _sig(user32.InvalidateRect, wintypes.BOOL, HW, ctypes.c_void_p, wintypes.BOOL)
+    _sig(user32.SetTimer, ctypes.c_size_t, HW, ctypes.c_size_t, wintypes.UINT, ctypes.c_void_p)
     _sig(user32.FillRect, ctypes.c_int, H, ctypes.POINTER(wintypes.RECT), H)
     _sig(user32.DrawTextW, ctypes.c_int, H, wintypes.LPCWSTR, ctypes.c_int, ctypes.POINTER(wintypes.RECT), wintypes.UINT)
     _sig(gdi32.CreateSolidBrush, H, wintypes.DWORD)
@@ -309,21 +312,81 @@ def foreground_app():
 
 # ------------------------------------------------------------------ feedback
 
-def ding(ok=True):
-    if not IS_WIN:
-        return
-    try:
-        import winsound
-        if ok:
-            winsound.Beep(880, 70)
-            winsound.Beep(1320, 90)
+SOUNDS = ("click", "chime", "off")
+_wav_cache = {}
+
+
+def _make_wav(notes, length):
+    """A short, quiet sound made of sine tones that fade out (no files needed).
+    notes: (frequency, start, fade time, loudness, overtone loudness)."""
+    import io
+    import math
+    import struct
+    import wave
+    rate = 44100
+    n = int(rate * length)
+    buf = [0.0] * n
+    for freq, start, tau, amp, over in notes:
+        s0 = int(rate * start)
+        for i in range(s0, n):
+            t = (i - s0) / rate
+            env = min(1.0, t / 0.004) * math.exp(-t / tau)  # 4 ms soft start, then fade
+            if env < 0.0005 and t > 0.01:
+                break
+            w = math.sin(2 * math.pi * freq * t) + over * math.sin(4 * math.pi * freq * t)
+            buf[i] += amp * env * w
+    fade = int(rate * 0.01)  # last 10 ms fade to silence, so it never ends with a pop
+    for k in range(fade):
+        buf[n - 1 - k] *= k / fade
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", int(max(-1, min(1, x)) * 32767)) for x in buf))
+    return out.getvalue()
+
+
+def sound_wav(name):
+    if name not in _wav_cache:
+        if name == "click":    # a soft, short tap
+            _wav_cache[name] = _make_wav([(1250, 0, 0.012, 0.22, 0.15)], 0.08)
+        elif name == "chime":  # two gentle bell notes going up
+            _wav_cache[name] = _make_wav([(784, 0, 0.09, 0.14, 0.2), (1175, 0.075, 0.12, 0.12, 0.2)], 0.45)
+        elif name == "error":  # two low notes going down
+            _wav_cache[name] = _make_wav([(440, 0, 0.07, 0.2, 0.1), (330, 0.13, 0.09, 0.2, 0.1)], 0.45)
         else:
-            winsound.MessageBeep(0x10)
-    except Exception:
-        pass
+            return None
+    return _wav_cache[name]
 
 
-_overlay_lock = threading.Lock()
+def play_sound(name):
+    """Play one of SOUNDS (or "error") without waiting for it. "off" plays nothing."""
+    if not IS_WIN or name in (None, "", "off"):
+        return
+    data = sound_wav(name)
+    if not data:
+        return
+
+    def run():
+        try:
+            import winsound
+            winsound.PlaySound(data, winsound.SND_MEMORY | winsound.SND_NODEFAULT)
+        except Exception:
+            pass
+    threading.Thread(target=run, daemon=True).start()
+
+
+def ding(ok=True):
+    """Older name, kept for callers: soft chime, or the error sound."""
+    play_sound("chime" if ok else "error")
+
+
+# The in-game bubble. There is only ever one: a new message replaces the text
+# of the one on screen (so "Saving clip..." turns into "Clip saved").
+_bubble_lock = threading.Lock()
+_bubble = {"alive": False, "hwnd": None, "text": "", "ok": True, "until": 0.0, "gen": 0}
+WM_BUBBLE = 0x8000 + 7  # WM_APP + 7: new text, repaint
 
 
 def show_overlay(text, seconds=2.0, ok=True):
@@ -332,24 +395,34 @@ def show_overlay(text, seconds=2.0, ok=True):
     Works over borderless/windowed games. Games in exclusive fullscreen don't
     allow anything on top of them; there you'll only hear the sound.
     It's hidden from screen recording, so it never ends up in your clips.
+    Calling it while a bubble is showing changes that bubble's text.
     """
     if not IS_WIN:
         return
-    threading.Thread(target=_overlay_thread, args=(text, seconds, ok), daemon=True).start()
+    with _bubble_lock:
+        _bubble.update(text=text, ok=ok, until=time.time() + seconds)
+        if _bubble["alive"]:
+            if _bubble["hwnd"]:
+                user32.PostMessageW(_bubble["hwnd"], WM_BUBBLE, 0, 0)
+            return  # the window is being made right now and will read the new text
+        _bubble["alive"] = True
+        _bubble["gen"] += 1
+        gen = _bubble["gen"]
+    threading.Thread(target=_overlay_thread, args=(gen,), daemon=True).start()
 
 
-def _overlay_thread(text, seconds, ok):
-    if not _overlay_lock.acquire(blocking=False):
-        return  # one at a time
+def _overlay_thread(gen):
     try:
-        _overlay(text, seconds, ok)
+        _overlay()
     except Exception:
         pass
     finally:
-        _overlay_lock.release()
+        with _bubble_lock:
+            if _bubble["gen"] == gen:  # not if a newer bubble has started since
+                _bubble.update(alive=False, hwnd=None)
 
 
-def _overlay(text, seconds, ok):
+def _overlay():
     WS_POPUP = 0x80000000
     WS_EX = 0x00000008 | 0x00080000 | 0x00000020 | 0x00000080 | 0x08000000  # topmost|layered|transparent|toolwindow|noactivate
     LWA_ALPHA = 0x2
@@ -372,11 +445,13 @@ def _overlay(text, seconds, ok):
                     ("hCursor", wintypes.HANDLE), ("hbrBackground", wintypes.HBRUSH),
                     ("lpszMenuName", wintypes.LPCWSTR), ("lpszClassName", wintypes.LPCWSTR)]
 
-    accent = 0x3AA5F0 if ok else 0x3C5AFF  # BGR: amber #f0a53a / red #ff5a3c
     bg = 0x0A0C0D  # #0d0c0a
 
     def wndproc(hwnd, msg, wp, lp):
         if msg == WM_PAINT:
+            with _bubble_lock:
+                text, ok = _bubble["text"], _bubble["ok"]
+            accent = 0x3AA5F0 if ok else 0x3C5AFF  # BGR: amber #f0a53a / red #ff5a3c
             ps = PAINTSTRUCT()
             hdc = user32.BeginPaint(hwnd, ctypes.byref(ps))
             rc = wintypes.RECT(0, 0, W, HGT)
@@ -399,8 +474,22 @@ def _overlay(text, seconds, ok):
             gdi32.DeleteObject(font)
             user32.EndPaint(hwnd, ctypes.byref(ps))
             return 0
+        if msg == WM_BUBBLE:
+            user32.InvalidateRect(hwnd, None, True)
+            with _bubble_lock:
+                left = _bubble["until"] - time.time()
+            user32.SetTimer(hwnd, 1, max(50, int(left * 1000)), None)
+            return 0
         if msg == WM_TIMER:
-            user32.DestroyWindow(hwnd)
+            with _bubble_lock:
+                left = _bubble["until"] - time.time()
+                if left <= 0.05:
+                    _bubble["hwnd"] = None  # new messages from now on open a new bubble
+                    _bubble["alive"] = False
+            if left > 0.05:
+                user32.SetTimer(hwnd, 1, int(left * 1000), None)
+            else:
+                user32.DestroyWindow(hwnd)
             return 0
         if msg == WM_DESTROY:
             user32.PostQuitMessage(0)
@@ -420,6 +509,9 @@ def _overlay(text, seconds, ok):
     hwnd = user32.CreateWindowExW(WS_EX, cls, "ClipDrop", WS_POPUP, x, y, W, HGT, None, None, hinst, None)
     if not hwnd:
         return
+    with _bubble_lock:
+        _bubble["hwnd"] = hwnd
+        left = _bubble["until"] - time.time()
     try:
         user32.SetWindowDisplayAffinity(hwnd, 0x11)  # keep it out of recordings
     except Exception:
@@ -427,7 +519,7 @@ def _overlay(text, seconds, ok):
     user32.SetLayeredWindowAttributes(hwnd, 0, 235, LWA_ALPHA)
     user32.ShowWindow(hwnd, SW_SHOWNOACTIVATE)
     user32.UpdateWindow(hwnd)
-    user32.SetTimer(hwnd, 1, int(seconds * 1000), None)
+    user32.SetTimer(hwnd, 1, max(50, int(left * 1000)), None)
     msg = wintypes.MSG()
     while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
         user32.TranslateMessage(ctypes.byref(msg))

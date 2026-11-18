@@ -127,11 +127,15 @@
     "Sound capture isn't installed. Run the ClipDrop setup again to fix it.": "تسجيل الصوت غير مثبت. شغّل برنامج تثبيت ClipDrop مرة ثانية لإصلاحه.",
     "Windows default": "افتراضي ويندوز", "(default)": "(الافتراضي)",
     // alerts
-    "Play a sound when a clip is saved": "تشغيل صوت عند حفظ مقطع",
-    "A short ding when it's saved, or a buzz if something went wrong.": "رنة قصيرة عند الحفظ، أو صوت تنبيه إذا صار خطأ.",
+    "Sound when you clip": "الصوت عند حفظ مقطع",
+    "Soft click (recommended)": "نقرة خفيفة (مُستحسن)", "Soft chime": "رنة خفيفة", "No sound": "بدون صوت",
+    "Listen": "اسمع",
+    "Plays on the PC the moment you press the hotkey. If the clip can't be saved, you hear two low notes.":
+      "يشتغل على الكمبيوتر أول ما تضغط الاختصار. وإذا ما انحفظ المقطع، بتسمع نغمتين منخفضتين.",
+    "Unknown sound": "صوت غير معروف",
     "Show \"Clip saved\" in the game": "إظهار «تم حفظ المقطع» داخل اللعبة",
-    "A small message in the top corner for 2 seconds. It never shows up in your clips. Works with borderless and windowed games. In exclusive fullscreen, Windows doesn't allow it, so you'll only hear the sound.":
-      "رسالة صغيرة في الزاوية العلوية لمدة ثانيتين، وما تظهر في مقاطعك أبدًا. تعمل مع الألعاب بوضع نافذة أو بدون حدود. في وضع ملء الشاشة الحصري ويندوز ما يسمح بها، فبتسمع الصوت فقط.",
+    "A small message in the top corner. It says \"Saving clip...\" the moment you press the hotkey, then \"Clip saved\" for 2 seconds. It never shows up in your clips. Works with borderless and windowed games. In exclusive fullscreen, Windows doesn't allow it, so you'll only hear the sound.":
+      "رسالة صغيرة في الزاوية العلوية. تقول «جارٍ حفظ المقطع...» أول ما تضغط الاختصار، وبعدها «تم حفظ المقطع» لمدة ثانيتين، وما تظهر في مقاطعك أبدًا. تعمل مع الألعاب بوضع نافذة أو بدون حدود. في وضع ملء الشاشة الحصري ويندوز ما يسمح بها، فبتسمع الصوت فقط.",
     "Tell me when files arrive on the PC": "نبّهني لما توصل ملفات للكمبيوتر",
     "A sound and a small pop-up on the PC when your phone sends files.": "صوت ورسالة صغيرة على الكمبيوتر لما يرسل جوالك ملفات.",
     // clips & games
