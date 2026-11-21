@@ -1,5 +1,23 @@
 # ClipDrop versions
 
+## 5.7
+
+**ClipDrop 5.7: smoother clips**
+- Clips no longer drop frames while you play. The picture now stays on the graphics card from capture to the encoder, instead of being copied through the CPU every frame.
+- If the fast capture fails once, ClipDrop no longer drops to the slow screen capture for good. It only switches after 3 failures in a row, and tries the fast one again after 5 minutes.
+- Fixed a small hitch every 2 seconds in saved clips.
+- If your microphone won't open, ClipDrop now tries simpler settings before giving up.
+
+<div dir="rtl">
+
+**ClipDrop 5.7: مقاطع أنعم**
+- المقاطع ما عادت تفقد إطارات وأنت تلعب. الصورة الحين تبقى على كرت الشاشة من التصوير إلى الترميز، بدل ما تنتقل للمعالج مع كل إطار.
+- إذا فشل التصوير السريع مرة، ClipDrop ما عاد ينتقل للتصوير البطيء على طول. ينتقل فقط بعد 3 محاولات فاشلة ورا بعض، ويرجع يجرب السريع بعد 5 دقايق.
+- انحلت رجفة صغيرة كانت تصير كل ثانيتين في المقاطع المحفوظة.
+- إذا ما اشتغل المايك، ClipDrop الحين يجرب إعدادات أبسط قبل ما يستسلم.
+
+</div>
+
 ## 5.6
 
 **ClipDrop 5.6: instant clip alert, softer sound**

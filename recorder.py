@@ -37,6 +37,9 @@ CHANNELS = 2
 AUDIO_CHUNK = 960  # 20 ms at 48 kHz
 
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+# The recorder gets a bit more CPU time than normal apps, so a busy game
+# doesn't starve it of time to grab frames.
+ABOVE_NORMAL = getattr(subprocess, "ABOVE_NORMAL_PRIORITY_CLASS", 0)
 
 try:
     import numpy as np
@@ -178,6 +181,51 @@ def pick_encoder(ffmpeg, fmt="h264", wanted="auto"):
     return cap["encoder"] if cap else "libx264"
 
 
+# Encoders that can take the picture straight from the graphics card (D3D11).
+GPU_FRAME_ENCODERS = ("_nvenc", "_amf")
+_gpu_cache = {}
+
+
+def gpu_tail(ffmpeg, encoder, monitor=0, height=0):
+    """The filters that keep the captured picture on the graphics card all the
+    way into the encoder, or None if this PC/FFmpeg can't do that.
+
+    The old way copied every frame from the graphics card to the CPU, scaled
+    and converted it there, then sent it back to the card to be encoded. While
+    a game is using the PC, that can't keep up and frames get dropped all the
+    time. Tried once with a few real frames, then remembered."""
+    if not encoder.endswith(GPU_FRAME_ENCODERS) or sys.platform != "win32":
+        return None
+    key = (ffmpeg, encoder, int(monitor), int(height))
+    with _caps_lock:
+        if key in _gpu_cache:
+            return _gpu_cache[key]
+    if height:
+        h = int(height) // 2 * 2
+        tails = [f",scale_d3d11=width=-2:height={h}", f",scale_d3d11=w=-2:h={h}", f",scale_d3d11=-2:{h}"]
+    else:
+        tails = [""]
+    found = None
+    for tail in tails:
+        try:
+            r = subprocess.run(
+                [ffmpeg, "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i",
+                 f"ddagrab=output_idx={int(monitor)}:framerate=30{tail}", "-frames:v", "10",
+                 "-c:v", encoder, "-f", "null", "-"],
+                capture_output=True, timeout=20, creationflags=NO_WINDOW)
+            if r.returncode == 0:
+                found = tail
+                break
+            err = r.stderr.decode("utf-8", "replace").strip().splitlines()
+            log(f"Graphics-card capture{' with scaling' if tail else ''} not available: "
+                f"{err[-1] if err else 'no message'}")
+        except Exception as e:
+            log(f"Graphics-card capture check failed: {e!r}")
+    with _caps_lock:
+        _gpu_cache[key] = found
+    return found
+
+
 def codec_of(encoder):
     if encoder.startswith(("hevc", "libx265")):
         return "hevc"
@@ -186,10 +234,13 @@ def codec_of(encoder):
     return "h264"
 
 
-def encoder_args(enc, bitrate, fps, keyframe_seconds=SEGMENT_SECONDS):
+def encoder_args(enc, bitrate, fps, keyframe_seconds=SEGMENT_SECONDS, gpu_frames=False):
+    """gpu_frames: the picture arrives still on the graphics card (D3D11), so
+    the encoder converts the colours itself; asking for a pixel format here
+    would force it back through the CPU."""
     gop = str(max(1, int(float(fps) * keyframe_seconds)))  # a keyframe every piece, so cuts are clean
     rate = ["-b:v", bitrate, "-maxrate", bitrate, "-bufsize", bitrate]
-    common = ["-g", gop, "-pix_fmt", "yuv420p"]
+    common = ["-g", gop] + ([] if gpu_frames else ["-pix_fmt", "yuv420p"])
     if enc.endswith("_nvenc"):
         return ["-c:v", enc, "-preset", "p4", "-tune", "ll", "-rc", "cbr", "-forced-idr", "1"] + rate + common
     if enc.endswith("_amf"):
@@ -296,15 +347,32 @@ class AudioPump:
                     ctypes.windll.ole32.CoInitializeEx(None, 0)
                 dev = get_dev()
                 log(f"Recording {label}: {dev.name}")
-                with dev.recorder(samplerate=SAMPLE_RATE, channels=CHANNELS, blocksize=AUDIO_CHUNK) as rec:
-                    while not self.stop_evt.is_set():
-                        data = rec.record(numframes=AUDIO_CHUNK)
-                        try:
-                            q.put_nowait(data)
-                        except queue.Full:
-                            pass
             except Exception as e:
                 log(f"{label} unavailable: {e!r}")
+                return
+            # Some headsets refuse stereo or our block size (soundcard then
+            # raises a bare AssertionError): try simpler setups before giving up.
+            errors = []
+            for channels, blocksize in ((CHANNELS, AUDIO_CHUNK), (1, AUDIO_CHUNK), (CHANNELS, None), (1, None)):
+                if self.stop_evt.is_set():
+                    return
+                opts = {"samplerate": SAMPLE_RATE, "channels": channels}
+                if blocksize:
+                    opts["blocksize"] = blocksize
+                try:
+                    with dev.recorder(**opts) as rec:
+                        if errors:
+                            log(f"{label} works with {channels} channel(s)")
+                        while not self.stop_evt.is_set():
+                            data = rec.record(numframes=AUDIO_CHUNK)
+                            try:
+                                q.put_nowait(data)
+                            except queue.Full:
+                                pass
+                    return
+                except Exception as e:
+                    errors.append(f"{channels}ch/{blocksize or 'auto'}: {e!r}")
+            log(f"{label} unavailable: " + "; ".join(errors))
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -403,6 +471,7 @@ class Recorder:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self.seg_ext = "mkv" if settings.get("video_format") == "av1" else "ts"
+        self._tail = ""
 
     # ---------- capture
 
@@ -413,6 +482,16 @@ class Recorder:
             return ["-re", "-f", "lavfi", "-i", f"testsrc2=size=1280x720:rate={fps}"]
         mon = int(self.s.get("monitor", 0))
         t = self.target
+        if mode == "ddagrab_gpu":
+            return ["-f", "lavfi", "-i",
+                    f"ddagrab=output_idx={mon}:framerate={fps}:draw_mouse={mouse}{self._tail}"]
+        if mode == "crop_gpu":
+            x0, y0, x1, y1 = t["rect"]
+            w, h = (x1 - x0) // 2 * 2, (y1 - y0) // 2 * 2
+            ox, oy = x0 - t["monitor_left"], y0 - t["monitor_top"]
+            return ["-f", "lavfi", "-i",
+                    f"ddagrab=output_idx={t['monitor']}:framerate={fps}:draw_mouse={mouse}"
+                    f":video_size={w}x{h}:offset_x={ox}:offset_y={oy}{self._tail}"]
         if mode == "gfxcapture":
             return ["-f", "lavfi", "-i",
                     f"gfxcapture=hwnd={t['hwnd']}:max_framerate={fps}:capture_cursor={mouse},hwdownload,format=bgra"]
@@ -433,11 +512,25 @@ class Recorder:
         return f"scale=-2:{h}" if h else "scale=trunc(iw/2)*2:trunc(ih/2)*2"
 
     def _modes(self):
+        """Capture methods, best first. The *_gpu ones keep frames on the
+        graphics card; the others copy every frame through the CPU."""
         if self.s.get("test_source"):
             return ["test"]
+        gpu = (self.encoder or "").endswith(GPU_FRAME_ENCODERS)
+        screen = (["ddagrab_gpu"] if gpu else []) + ["ddagrab", "gdigrab"]
         if self.s.get("capture") == "window" and self.target:
-            return ["gfxcapture", "crop", "ddagrab", "gdigrab"]
-        return ["ddagrab", "gdigrab"]
+            return ["gfxcapture"] + (["crop_gpu"] if gpu else []) + ["crop"] + screen
+        return screen
+
+    def _gpu_ready(self, mode):
+        """Can this PC use the graphics-card version of `mode`? Sets self._tail."""
+        if mode == "crop_gpu":
+            mon = int(self.target.get("monitor", 0))
+        else:
+            mon = int(self.s.get("monitor", 0))
+        tail = gpu_tail(self.ffmpeg, self.encoder, mon, int(self.s.get("height") or 0))
+        self._tail = tail or ""
+        return tail is not None
 
     def _launch(self, mode):
         pattern = str(self.buf_dir / f"seg_{int(time.time())}_%06d.{self.seg_ext}")
@@ -446,24 +539,33 @@ class Recorder:
                "-thread_queue_size", "1024"] + self._video_input(mode)
         cmd += ["-thread_queue_size", "1024", "-f", "s16le", "-ar", str(SAMPLE_RATE),
                 "-ac", "4" if mic else "2", "-i", "pipe:0"]
+        gpu = mode.endswith("_gpu")
         vf = self._scale_filter()
         if mic:
             # track 1: game + voice mixed (what your phone plays)
             # track 2: game only, track 3: voice only (for the volume sliders)
-            fc = (f"[0:v]{vf}[v];[1:a]asplit=3[x][y][z];"
+            fc = ("[1:a]asplit=3[x][y][z];"
                   "[x]pan=stereo|c0=c0+c2|c1=c1+c3[mix];"
                   "[y]pan=stereo|c0=c0|c1=c1[game];"
                   "[z]pan=stereo|c0=c2|c1=c3[voice]")
-            cmd += ["-filter_complex", fc, "-map", "[v]", "-map", "[mix]", "-map", "[game]", "-map", "[voice]"]
+            if gpu:
+                cmd += ["-filter_complex", fc, "-map", "0:v"]
+            else:
+                cmd += ["-filter_complex", f"[0:v]{vf}[v];" + fc, "-map", "[v]"]
+            cmd += ["-map", "[mix]", "-map", "[game]", "-map", "[voice]"]
         else:
-            cmd += ["-map", "0:v", "-map", "1:a", "-vf", vf]
-        cmd += encoder_args(self.encoder, self.s["bitrate"], self.s["fps"])
+            cmd += ["-map", "0:v", "-map", "1:a"] + ([] if gpu else ["-vf", vf])
+        cmd += encoder_args(self.encoder, self.s["bitrate"], self.s["fps"], gpu_frames=gpu)
         cmd += ["-c:a", "aac", "-b:a", "192k",
                 "-f", "segment", "-segment_time", str(SEGMENT_SECONDS),
-                "-segment_format", "matroska" if self.seg_ext == "mkv" else "mpegts",
-                "-reset_timestamps", "1", pattern]
+                "-segment_format", "matroska" if self.seg_ext == "mkv" else "mpegts"]
+        if self.seg_ext == "mkv":
+            # MKV pieces are joined one by one, so each starts at zero. TS pieces
+            # keep running timestamps and are joined back to back (see save_clip).
+            cmd += ["-reset_timestamps", "1"]
+        cmd += [pattern]
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE,
-                                     creationflags=NO_WINDOW)
+                                     creationflags=NO_WINDOW | ABOVE_NORMAL)
         _kill_with_us(self.proc)
         self.audio = AudioPump(self.proc.stdin, self.s)
         self.audio.start()
@@ -495,10 +597,15 @@ class Recorder:
     def _supervise(self):
         modes = self._modes()
         mi = 0
+        quick_fails = 0      # FFmpeg runs in a row that died within 10 s
+        fell_back_at = None  # when we last moved to a slower capture method
         while not self._stop.is_set():
             mode = modes[min(mi, len(modes) - 1)]
+            if mode.endswith("_gpu") and not self._gpu_ready(mode):
+                mi += 1
+                continue
             self.mode = mode
-            what = f"window of {self.target['name']}" if mode in ("gfxcapture", "crop") else "screen"
+            what = f"window of {self.target['name']}" if mode in ("gfxcapture", "crop", "crop_gpu") else "screen"
             log(f"Recording {what} ({mode}, {self.s['fps']} fps, {self.s['bitrate']}), "
                 f"keeping last {self.buffer_seconds}s")
             self._launch(mode)
@@ -509,23 +616,41 @@ class Recorder:
                 problem = self._stalled(started)
                 if problem:
                     log(f"Recording got stuck ({problem}), restarting it")
-                    try:
-                        self.proc.kill()
-                    except Exception:
-                        pass
                     break
-                time.sleep(1)
+                self._stop.wait(1)
             self.running = False
             if self.audio:
                 self.audio.stop()
+            if self.proc.poll() is None:
+                # stopped or stuck: never leave this FFmpeg running on its own
+                try:
+                    self.proc.kill()
+                except Exception:
+                    pass
             if self._stop.is_set():
                 break
             err = (self.proc.stderr.read() or b"").decode("utf-8", "replace").strip()
             self.last_error = err[-500:]
             log(f"FFmpeg stopped ({mode}): {self.last_error or 'no message'}")
-            if time.time() - started < 10 and mi < len(modes) - 1:
-                mi += 1  # failed quickly: try the next capture method
-            time.sleep(2)
+            if time.time() - started < 10:
+                quick_fails += 1
+            else:
+                quick_fails = 0
+            # One hiccup is not a reason to drop to a slower method for good:
+            # only move down after 3 quick failures in a row, and try the best
+            # method again 5 minutes later.
+            if quick_fails >= 3 and mi < len(modes) - 1:
+                mi += 1
+                quick_fails = 0
+                fell_back_at = time.time()
+                log(f"Switching to the slower {modes[mi]} capture")
+            elif mi > 0 and fell_back_at and time.time() - fell_back_at > 300:
+                mi = 0
+                quick_fails = 0
+                fell_back_at = None
+                log("Trying the faster capture again")
+            # wait longer after each failure in a row (2, 4, 8 ... 60 s)
+            self._stop.wait(min(60, 2 ** (quick_fails + 1)) if quick_fails else 2)
 
     def _stalled(self, started):
         """Why the running FFmpeg looks stuck, or '' if it's fine."""
@@ -581,14 +706,14 @@ class Recorder:
             out = folder / f"{game or 'Clip'} {stamp}.mp4"
             if out.exists():
                 out = folder / f"{game or 'Clip'} {stamp} ({seconds}s).mp4"
-            lst = self.buf_dir / "concat.txt"
-            lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in segs), encoding="utf-8")
+            src = self._join_input(segs)
+
             def join(maps):
                 return subprocess.run(
-                    [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0",
-                     "-i", str(lst)] + maps + ["-c", "copy"] + mp4_tag(self.encoder) +
+                    [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y"] + src + maps +
+                    ["-c", "copy", "-avoid_negative_ts", "make_zero"] + mp4_tag(self.encoder) +
                     ["-movflags", "+faststart", str(out)],
-                    capture_output=True, timeout=120, creationflags=NO_WINDOW)
+                    capture_output=True, timeout=120, creationflags=NO_WINDOW, cwd=str(self.buf_dir))
 
             r = join(["-map", "0"])
             if r.returncode != 0 or not out.exists():
@@ -605,6 +730,31 @@ class Recorder:
                 raise RuntimeError(err[-400:] or "FFmpeg failed")
             log(f"Saved {out.name}")
             return out
+
+    def _join_input(self, segs):
+        """FFmpeg input arguments that read `segs` as one clip.
+
+        TS pieces from the same FFmpeg run carry running timestamps, so they
+        are read back to back as one stream ("concat:" protocol) and every frame
+        keeps its exact time. Joining them one by one (the concat list) left a
+        frame or two missing at every 2 s join, because each piece's sound runs
+        a little longer than its picture. Pieces from different runs (after a
+        restart) are still joined run by run with the concat list."""
+        lst = self.buf_dir / "concat.txt"
+        if self.seg_ext != "ts":
+            lst.write_text("".join(f"file '{p.name}'\n" for p in segs), encoding="utf-8")
+            return ["-f", "concat", "-safe", "0", "-i", lst.name]
+        runs = []
+        for p in segs:  # seg_<run>_<n>.ts
+            run = p.name.rsplit("_", 1)[0]
+            if runs and runs[-1][0] == run:
+                runs[-1][1].append(p.name)
+            else:
+                runs.append((run, [p.name]))
+        if len(runs) == 1:
+            return ["-i", "concat:" + "|".join(runs[0][1])]
+        lst.write_text("".join(f"file 'concat:{'|'.join(names)}'\n" for _, names in runs), encoding="utf-8")
+        return ["-protocol_whitelist", "file,concat", "-f", "concat", "-safe", "0", "-i", lst.name]
 
     def stop(self):
         self._stop.set()

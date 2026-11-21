@@ -1,8 +1,8 @@
 {
-  "version": "5.6",
-  "file": "ClipDrop-Setup-5.6.exe",
-  "size": 550856,
-  "sha256": "d442c7c8eacdc49144005cc10e958ef32a01388b50354531f598645e9d0cc9e7",
-  "notes_en": "**ClipDrop 5.6: instant clip alert, softer sound**\n- The moment you press the clip hotkey, you hear the sound and see \"Saving clip...\" in the game. When the file is ready, the same message changes to \"Clip saved\". Before, both came only after the clip was written, a few seconds later.\n- The old sharp beep is gone. Pick a sound in Settings > Alerts: Soft click, Soft chime, or No sound. Tap Listen to hear it on the PC.\n- If a clip can't be saved, you hear two low notes and the message turns red.",
-  "notes_ar": "**ClipDrop 5.6: تنبيه فوري وصوت أخف**\n- أول ما تضغط اختصار الحفظ، تسمع الصوت ويطلع لك «جارٍ حفظ المقطع...» داخل اللعبة. ولما يجهز الملف، نفس الرسالة تتغير إلى «تم حفظ المقطع». قبل كانوا يطلعون بعد ما ينكتب المقطع، بعد كم ثانية.\n- راح الصوت الحاد القديم. اختر الصوت من الإعدادات > التنبيهات: نقرة خفيفة، رنة خفيفة، أو بدون صوت. اضغط «اسمع» عشان تسمعه على الكمبيوتر.\n- إذا ما انحفظ المقطع، بتسمع نغمتين منخفضتين والرسالة تصير حمراء."
+  "version": "5.7",
+  "file": "ClipDrop-Setup-5.7.exe",
+  "size": 552676,
+  "sha256": "adad4f943bbaf857aaeea05c7077e7b4db1a2571fda8118cae5c8d501837a23d",
+  "notes_en": "**ClipDrop 5.7: smoother clips**\n- Clips no longer drop frames while you play. The picture now stays on the graphics card from capture to the encoder, instead of being copied through the CPU every frame.\n- If the fast capture fails once, ClipDrop no longer drops to the slow screen capture for good. It only switches after 3 failures in a row, and tries the fast one again after 5 minutes.\n- Fixed a small hitch every 2 seconds in saved clips.\n- If your microphone won't open, ClipDrop now tries simpler settings before giving up.",
+  "notes_ar": "**ClipDrop 5.7: مقاطع أنعم**\n- المقاطع ما عادت تفقد إطارات وأنت تلعب. الصورة الحين تبقى على كرت الشاشة من التصوير إلى الترميز، بدل ما تنتقل للمعالج مع كل إطار.\n- إذا فشل التصوير السريع مرة، ClipDrop ما عاد ينتقل للتصوير البطيء على طول. ينتقل فقط بعد 3 محاولات فاشلة ورا بعض، ويرجع يجرب السريع بعد 5 دقايق.\n- انحلت رجفة صغيرة كانت تصير كل ثانيتين في المقاطع المحفوظة.\n- إذا ما اشتغل المايك، ClipDrop الحين يجرب إعدادات أبسط قبل ما يستسلم."
 }
