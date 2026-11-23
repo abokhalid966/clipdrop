@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.7"
+VERSION = "5.8"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -52,6 +52,7 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".bmp"
 PHOTOS_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".heic", ".heif", ".mp4", ".mov", ".m4v"}  # what iPhone Photos accepts
 SETTLE_SECONDS = 3
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+LOG_MAX_BYTES = 5 * 1024 * 1024
 GAME_GONE_GRACE = 20  # seconds to keep recording after the game closes ("only while gaming")
 
 DEFAULTS = {
@@ -215,6 +216,10 @@ def clean_settings(new, current):
             out[k] = [str(x).strip() for x in v if str(x).strip()]
         else:
             out[k] = str(v)
+    if "save_folder" in out:
+        out["save_folder"] = out["save_folder"].strip().strip('"')
+        if not out["save_folder"]:
+            raise ValueError("Pick a folder for your clips")
     if out.get("record_when", "always") not in ("always", "game"):
         raise ValueError("Unknown recording option")
     if out.get("capture", "screen") not in ("screen", "window"):
@@ -479,6 +484,8 @@ class Library:
             raise ValueError("Name can't be empty")
         target = unique_path(p.with_name(new_name + p.suffix))
         p.rename(target)
+        if str(p) in self.ours:  # a clip saved a moment ago: show it right away under its new name
+            self.ours.add(str(target))
         self.invalidate()
         return target
 
@@ -1034,6 +1041,7 @@ class App:
         self.game_seen_at = 0
         self.caps = None            # which video formats this PC supports
         self._rec_lock = threading.RLock()
+        self._last_recorder = None
         self._wake = threading.Event()
 
     def notify(self, title, text):
@@ -1081,9 +1089,13 @@ class App:
                 return
             if r:
                 r.stop()
+                self._last_recorder = r
                 self.recorder = None
             if want:
-                self.recorder = rec_mod.Recorder(self.settings, self.ffmpeg, self.buffer_seconds(), target)
+                # keep the pieces the last recorder made, so changing a setting
+                # (or the game window) doesn't throw away the replay buffer
+                self.recorder = rec_mod.Recorder(self.settings, self.ffmpeg, self.buffer_seconds(), target,
+                                                 keep_from=self._last_recorder)
                 self.recorder.start()
 
     def watch_games(self):
@@ -1136,7 +1148,12 @@ class App:
             if not self.settings.get("recording_on", True):
                 raise RuntimeError("Recording is turned off in Settings.")
             raise RuntimeError("Not recording right now: no game is open (Settings > When to record).")
-        seconds = int(seconds or self.settings["hotkeys"][0]["seconds"])
+        try:
+            seconds = int(seconds or self.settings["hotkeys"][0]["seconds"])
+        except (TypeError, ValueError):
+            raise ValueError("Clip length must be a number of seconds")
+        if not 5 <= seconds <= 600:
+            raise ValueError("Clip length must be between 5 seconds and 10 minutes")
         game = None
         if self.settings.get("name_by_game"):
             game = (self.game or {}).get("name") or winutil.foreground_app()
@@ -1217,12 +1234,16 @@ class App:
         old = dict(self.settings)
         self.settings.update(clean_settings(new, self.settings))
         save_settings(self.settings)
+        # settings that change how we record (the save folder and hotkeys don't:
+        # the recorder reads the folder when saving, and only needs a new length)
         rec_keys = ("fps", "bitrate", "height", "encoder", "monitor", "show_mouse", "video_format",
                     "game_audio", "microphone", "speaker_device", "mic_device", "game_volume",
-                    "mic_volume", "save_folder", "recording_on", "record_when", "capture", "hotkeys")
+                    "mic_volume", "recording_on", "record_when", "capture")
         changed_rec = any(old.get(k) != self.settings.get(k) for k in rec_keys)
         if old.get("hotkeys") != self.settings["hotkeys"]:
             self.start_hotkeys()
+            if self.recorder:
+                self.recorder.buffer_seconds = self.buffer_seconds()
         if old.get("start_with_windows") != self.settings["start_with_windows"]:
             set_autostart(self.settings["start_with_windows"])
         if changed_rec:
@@ -1238,6 +1259,47 @@ class App:
 
 
 # ================================================================ web server
+
+class QuietServer(ThreadingHTTPServer):
+    """Doesn't fill the log when a phone closes the page mid-download."""
+
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (ConnectionResetError, ConnectionAbortedError, BrokenPipeError,
+                                          TimeoutError)):
+            return
+        super().handle_error(request, client_address)
+
+
+class TimedLog:
+    """Log file that puts the time at the start of every line."""
+
+    def __init__(self, f):
+        self.f = f
+        self.at_start = True
+        self.lock = threading.Lock()
+
+    def write(self, text):
+        if not text:
+            return 0
+        with self.lock:
+            out = []
+            for part in text.splitlines(keepends=True):
+                if self.at_start and part.strip():
+                    out.append(time.strftime("%m-%d %H:%M:%S "))
+                out.append(part)
+                self.at_start = part.endswith("\n")
+            self.f.write("".join(out))
+        return len(text)
+
+    def flush(self):
+        try:
+            self.f.flush()
+        except Exception:
+            pass
+
+    def __getattr__(self, name):
+        return getattr(self.f, name)
+
 
 def make_handler(app):
     key = app.settings["phone_key"]
@@ -1769,7 +1831,13 @@ def main():
     # Started without a console window (ClipDrop.vbs / pythonw): write messages to a log file
     if sys.stdout is None or sys.stderr is None or "pythonw" in Path(sys.executable).name.lower():
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        logf = open(CACHE_DIR / "clipdrop.log", "a", encoding="utf-8", buffering=1)
+        log_path = CACHE_DIR / "clipdrop.log"
+        try:  # keep the log small: start a new one past 5 MB, keep one old one
+            if log_path.stat().st_size > LOG_MAX_BYTES:
+                log_path.replace(CACHE_DIR / "clipdrop.old.log")
+        except OSError:
+            pass
+        logf = TimedLog(open(log_path, "a", encoding="utf-8", buffering=1))
         sys.stdout = sys.stderr = logf
         print(f"\n--- ClipDrop {VERSION} started {time.ctime()} ---")
     app = App()
@@ -1778,7 +1846,7 @@ def main():
     app.public_base = f"http://{app.public_host}"
     app.public_url = f"{app.public_base}/?k={app.settings['phone_key']}"
     try:
-        server = ThreadingHTTPServer(("0.0.0.0", port), make_handler(app))
+        server = QuietServer(("0.0.0.0", port), make_handler(app))
     except OSError as e:
         fatal(f"ClipDrop is probably already running (look for its icon by the clock).\n\n"
               f"Port {port} is busy: {e}")

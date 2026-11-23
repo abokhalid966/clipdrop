@@ -35,6 +35,12 @@ SEGMENT_SECONDS = 2
 SAMPLE_RATE = 48000
 CHANNELS = 2
 AUDIO_CHUNK = 960  # 20 ms at 48 kHz
+# No new 2-second piece for this long means the picture stopped coming in
+# (the sound alone can keep a piece growing), so FFmpeg gets restarted.
+STALL_SECONDS = 10
+# Pieces further apart than this aren't one stretch of recording (the
+# recorder was off in between), so a clip never joins across that gap.
+MAX_JOIN_GAP = SEGMENT_SECONDS + 15
 
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 # The recorder gets a bit more CPU time than normal apps, so a busy game
@@ -340,41 +346,105 @@ class AudioPump:
         self.thread.start()
 
     def _add_source(self, q, get_dev, label):
+        """Read one sound device into `q` until we stop. If the device can't be
+        opened, or goes away (a wireless headset turned off), keep trying every
+        few seconds instead of giving up until the next restart."""
         def run():
-            try:
-                if sys.platform == "win32":
+            if sys.platform == "win32":
+                try:
                     import ctypes
                     ctypes.windll.ole32.CoInitializeEx(None, 0)
-                dev = get_dev()
-                log(f"Recording {label}: {dev.name}")
-            except Exception as e:
-                log(f"{label} unavailable: {e!r}")
-                return
-            # Some headsets refuse stereo or our block size (soundcard then
-            # raises a bare AssertionError): try simpler setups before giving up.
-            errors = []
-            for channels, blocksize in ((CHANNELS, AUDIO_CHUNK), (1, AUDIO_CHUNK), (CHANNELS, None), (1, None)):
-                if self.stop_evt.is_set():
-                    return
-                opts = {"samplerate": SAMPLE_RATE, "channels": channels}
-                if blocksize:
-                    opts["blocksize"] = blocksize
+                except Exception:
+                    pass
+            last_problem = None
+            told_name = None
+            while not self.stop_evt.is_set():
                 try:
-                    with dev.recorder(**opts) as rec:
-                        if errors:
-                            log(f"{label} works with {channels} channel(s)")
-                        while not self.stop_evt.is_set():
-                            data = rec.record(numframes=AUDIO_CHUNK)
-                            try:
-                                q.put_nowait(data)
-                            except queue.Full:
-                                pass
-                    return
+                    dev = get_dev()
                 except Exception as e:
-                    errors.append(f"{channels}ch/{blocksize or 'auto'}: {e!r}")
-            log(f"{label} unavailable: " + "; ".join(errors))
+                    dev, problem = None, f"{e!r}"
+                if dev is not None:
+                    if dev.name != told_name:
+                        log(f"Recording {label}: {dev.name}")
+                        told_name = dev.name
+                    problem = self._read_soundcard(dev, q, label)
+                    if problem is None:  # stopped on purpose
+                        return
+                    # soundcard can't open some mics (it only accepts one exact
+                    # Windows sound format): use a second library for those
+                    if label == "microphone" and problem.startswith("open:"):
+                        sd_problem = self._read_sounddevice(dev.name, q, label)
+                        if sd_problem is None:
+                            return
+                        problem += f"; other way: {sd_problem}"
+                if problem != last_problem:
+                    log(f"{label} unavailable, trying again every 5 seconds: {problem}")
+                    last_problem = problem
+                self.stop_evt.wait(5)
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _read_soundcard(self, dev, q, label):
+        """Record `dev` into `q`. Returns None when stopped on purpose, else
+        why it failed ("open: ..." if it never started)."""
+        # Some headsets refuse stereo or our block size: try simpler setups first.
+        errors = []
+        for channels, blocksize in ((CHANNELS, AUDIO_CHUNK), (1, AUDIO_CHUNK), (CHANNELS, None), (1, None)):
+            if self.stop_evt.is_set():
+                return None
+            opts = {"samplerate": SAMPLE_RATE, "channels": channels}
+            if blocksize:
+                opts["blocksize"] = blocksize
+            started = False
+            try:
+                with dev.recorder(**opts) as rec:
+                    started = True
+                    if errors:
+                        log(f"{label} works with {channels} channel(s)")
+                    while not self.stop_evt.is_set():
+                        data = rec.record(numframes=AUDIO_CHUNK)
+                        try:
+                            q.put_nowait(data)
+                        except queue.Full:
+                            pass
+                return None
+            except Exception as e:
+                if started:  # it was working, then the device went away
+                    return f"stopped: {e!r}"
+                errors.append(f"{channels}ch/{blocksize or 'auto'}: {e!r}")
+        return "open: " + "; ".join(errors)
+
+    def _read_sounddevice(self, name, q, label):
+        """Record a microphone with the 'sounddevice' package (PortAudio), which
+        converts any Windows sound format. Returns None when stopped on purpose."""
+        try:
+            import sounddevice as sd
+        except Exception:
+            return "the 'sounddevice' package is missing"
+        try:
+            apis = sd.query_hostapis()
+            wasapi = next((i for i, a in enumerate(apis) if "WASAPI" in a["name"]), None)
+            found = [(i, d) for i, d in enumerate(sd.query_devices())
+                     if d["max_input_channels"] > 0 and (d["name"] == name or name.startswith(d["name"])
+                                                         or d["name"].startswith(name))]
+            if not found:
+                return f"no device called {name}"
+            found.sort(key=lambda x: x[1]["hostapi"] != wasapi)  # WASAPI first
+            idx, info = found[0]
+            extra = sd.WasapiSettings(auto_convert=True) if info["hostapi"] == wasapi else None
+            channels = min(CHANNELS, int(info["max_input_channels"]))
+            with sd.InputStream(device=idx, samplerate=SAMPLE_RATE, channels=channels, dtype="float32",
+                                blocksize=AUDIO_CHUNK, extra_settings=extra) as stream:
+                log(f"{label} works through sounddevice ({channels} channel(s))")
+                while not self.stop_evt.is_set():
+                    data, _ = stream.read(AUDIO_CHUNK)
+                    try:
+                        q.put_nowait(data.copy())
+                    except queue.Full:
+                        pass
+            return None
+        except Exception as e:
+            return repr(e)
 
     def _take(self, q, n):
         """Pull exactly n stereo frames from a source queue, padding with silence."""
@@ -450,18 +520,24 @@ class AudioPump:
 # ---------------------------------------------------------------- recorder
 
 class Recorder:
-    def __init__(self, settings, ffmpeg, buffer_seconds=30, target=None):
+    def __init__(self, settings, ffmpeg, buffer_seconds=30, target=None, keep_from=None):
         """target: the game window to record (from winutil.foreground_game),
-        used when settings['capture'] == 'window'."""
+        used when settings['capture'] == 'window'.
+        keep_from: the recorder this one replaces (after a settings change).
+        Its pieces are kept, so the replay buffer isn't thrown away."""
         self.s = settings
         self.ffmpeg = ffmpeg
         self.buffer_seconds = int(buffer_seconds)
         self.target = target
         self.buf_root = Path(tempfile.gettempdir()) / "ClipDrop" / "buffer"
-        # each recorder gets its own folder, so pieces from another (or an old,
-        # left-over) recording can never end up in a clip
-        self.buf_dir = self.buf_root / f"run_{os.getpid()}_{int(time.time() * 1000)}"
-        self.out_dir = Path(os.path.expandvars(os.path.expanduser(settings["save_folder"])))
+        # Each ClipDrop gets its own folder, so pieces left over from an old
+        # (crashed) ClipDrop can never end up in a clip.
+        if keep_from is not None:
+            self.buf_dir = keep_from.buf_dir
+            self.runs = dict(keep_from.runs)
+        else:
+            self.buf_dir = self.buf_root / f"run_{os.getpid()}_{int(time.time() * 1000)}"
+            self.runs = {}  # FFmpeg run id -> what it recorded (only matching runs are joined)
         self.proc = None
         self.audio = None
         self.encoder = None
@@ -472,6 +548,13 @@ class Recorder:
         self._stop = threading.Event()
         self.seg_ext = "mkv" if settings.get("video_format") == "av1" else "ts"
         self._tail = ""
+        self._restart = threading.Event()
+        self._newest = None      # name of the newest piece, and when it first showed up
+        self._newest_at = 0.0
+
+    @property
+    def out_dir(self):
+        return Path(os.path.expandvars(os.path.expanduser(self.s["save_folder"])))
 
     # ---------- capture
 
@@ -533,8 +616,12 @@ class Recorder:
         return tail is not None
 
     def _launch(self, mode):
-        pattern = str(self.buf_dir / f"seg_{int(time.time())}_%06d.{self.seg_ext}")
+        run = str(int(time.time() * 1000))
+        pattern = str(self.buf_dir / f"seg_{run}_%06d.{self.seg_ext}")
         mic = bool(self.s.get("microphone"))
+        # pieces can only be joined with pieces recorded the same way
+        self.runs[run] = repr((self._video_input(mode), self._scale_filter(), self.encoder,
+                               self.s.get("fps"), mic, self.seg_ext))
         cmd = [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
                "-thread_queue_size", "1024"] + self._video_input(mode)
         cmd += ["-thread_queue_size", "1024", "-f", "s16le", "-ar", str(SAMPLE_RATE),
@@ -562,7 +649,10 @@ class Recorder:
         if self.seg_ext == "mkv":
             # MKV pieces are joined one by one, so each starts at zero. TS pieces
             # keep running timestamps and are joined back to back (see save_clip).
-            cmd += ["-reset_timestamps", "1"]
+            # The piece list says exactly how long each piece's picture is,
+            # so they can be joined without a gap (see _join_input).
+            cmd += ["-reset_timestamps", "1", "-segment_list", str(self.buf_dir / f"list_{run}.csv"),
+                    "-segment_list_type", "csv", "-segment_list_size", "300"]
         cmd += [pattern]
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE,
                                      creationflags=NO_WINDOW | ABOVE_NORMAL)
@@ -589,6 +679,12 @@ class Recorder:
         kill_leftover_ffmpeg()
         self._clear_old_buffers()
         self.buf_dir.mkdir(parents=True, exist_ok=True)
+        for p in self.buf_dir.glob("seg_*"):  # pieces in the other format (format was changed)
+            if p.suffix != "." + self.seg_ext:
+                try:
+                    p.unlink()
+                except OSError:
+                    pass
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.encoder = pick_encoder(self.ffmpeg, self.s.get("video_format", "h264"), self.s.get("encoder", "auto"))
         log(f"Encoder: {self.encoder}")
@@ -608,14 +704,21 @@ class Recorder:
             what = f"window of {self.target['name']}" if mode in ("gfxcapture", "crop", "crop_gpu") else "screen"
             log(f"Recording {what} ({mode}, {self.s['fps']} fps, {self.s['bitrate']}), "
                 f"keeping last {self.buffer_seconds}s")
+            self._restart.clear()
             self._launch(mode)
             started = time.time()
+            segs = self._segments()
+            self._newest, self._newest_at = (segs[-1].name if segs else None), started
             self.running = True
+            stuck = False
             while self.proc.poll() is None and not self._stop.is_set():
                 self._cleanup()
                 problem = self._stalled(started)
+                if not problem and self._restart.is_set():
+                    problem = "a clip was asked for but no new video came in"
                 if problem:
                     log(f"Recording got stuck ({problem}), restarting it")
+                    stuck = True
                     break
                 self._stop.wait(1)
             self.running = False
@@ -627,12 +730,26 @@ class Recorder:
                     self.proc.kill()
                 except Exception:
                     pass
+            try:
+                self.proc.stdin.close()
+            except Exception:
+                pass
+            if stuck and self._newest:
+                # the piece that kept growing holds sound but no picture: drop it
+                # so no clip ever includes it
+                try:
+                    self.proc.wait(timeout=5)
+                    (self.buf_dir / self._newest).unlink()
+                except Exception:
+                    pass
             if self._stop.is_set():
                 break
             err = (self.proc.stderr.read() or b"").decode("utf-8", "replace").strip()
             self.last_error = err[-500:]
             log(f"FFmpeg stopped ({mode}): {self.last_error or 'no message'}")
-            if time.time() - started < 10:
+            # getting stuck counts as a failure too: if this capture keeps
+            # freezing, move to a slower one that works
+            if time.time() - started < 10 or stuck:
                 quick_fails += 1
             else:
                 quick_fails = 0
@@ -653,22 +770,36 @@ class Recorder:
             self._stop.wait(min(60, 2 ** (quick_fails + 1)) if quick_fails else 2)
 
     def _stalled(self, started):
-        """Why the running FFmpeg looks stuck, or '' if it's fine."""
-        if time.time() - started < 20:
-            return ""
-        if self.audio and not self.audio.alive():
+        """Why the running FFmpeg looks stuck, or '' if it's fine.
+
+        A new piece starts every 2 seconds, but only when new video arrives.
+        If the capture freezes while the sound keeps coming, the newest piece
+        just keeps growing (it once grew for an hour), so we watch for new
+        pieces, not for the file changing."""
+        if self.audio and time.time() - started > 20 and not self.audio.alive():
             return "the sound feed stopped"
         segs = self._segments()
-        try:
-            newest = segs[-1].stat().st_mtime if segs else started
-        except OSError:
+        newest = segs[-1].name if segs else None
+        now = time.time()
+        if newest != self._newest:
+            self._newest, self._newest_at = newest, now
             return ""
-        if time.time() - newest > 20:
-            return "no new video for 20 seconds"
+        if now - started > 15 and now - self._newest_at > STALL_SECONDS:
+            return f"no new video for {int(now - self._newest_at)} seconds"
         return ""
 
     def _segments(self):
-        return sorted(self.buf_dir.glob(f"seg_*.{self.seg_ext}"), key=lambda p: (p.stat().st_mtime, p.name))
+        out = []
+        for p in self.buf_dir.glob(f"seg_*.{self.seg_ext}"):
+            try:
+                out.append((p.stat().st_mtime, p.name, p))
+            except OSError:  # deleted just now
+                pass
+        return [p for _, _, p in sorted(out)]
+
+    @staticmethod
+    def _run_of(p):
+        return p.name[4:].rsplit("_", 1)[0]  # seg_<run>_<n>.ext
 
     def _cleanup(self):
         segs = self._segments()
@@ -678,6 +809,13 @@ class Recorder:
                 p.unlink()
             except OSError:
                 pass  # still open, try next time
+        live = {self._run_of(p) for p in segs[-keep:]}
+        for run in [r for r in self.runs if r not in live and r != max(self.runs)]:
+            self.runs.pop(run, None)
+            try:
+                (self.buf_dir / f"list_{run}.csv").unlink(missing_ok=True)
+            except OSError:
+                pass
 
     # ---------- saving
 
@@ -686,20 +824,37 @@ class Recorder:
         Clips go into a subfolder named after the game, if we know it."""
         seconds = int(seconds)
         with self._lock:
-            # wait for the piece being recorded right now to finish, so the
-            # clip ends at the moment you pressed the key
-            first = self._segments()
-            deadline = time.time() + SEGMENT_SECONDS + 1.5
+            if not self.running:
+                raise RuntimeError("Recording is restarting. Try again in a few seconds.")
+            # Wait for the piece being recorded right now to finish, so the
+            # clip ends at the moment you pressed the key. A new piece starts
+            # every 2 seconds; if none does, the capture froze, and the pieces
+            # we have are old: never hand those out as "the last minute".
+            first = {p.name for p in self._segments()}
+            deadline = time.time() + 2 * SEGMENT_SECONDS + 2
+            rotated = False
             while time.time() < deadline:
                 now = self._segments()
-                if now and first and now[-1] != first[-1]:
+                if now and now[-1].name not in first:  # a brand-new piece started
+                    rotated = True
                     break
                 time.sleep(0.1)
-            segs = self._segments()[:-1]  # newest one is still being written
+            if not rotated:
+                self._restart.set()
+                raise RuntimeError("Recording froze, so ClipDrop is restarting it. "
+                                   "Try again in a few seconds.")
+            finished = self._segments()[:-1]  # the newest one is still being written
+            # the piece that just finished must be from right now; if it's old,
+            # the recording restarted and has nothing new yet
+            try:
+                fresh = bool(finished) and time.time() - finished[-1].stat().st_mtime < SEGMENT_SECONDS + 3
+            except OSError:
+                fresh = False
+            if finished and not fresh:
+                raise RuntimeError("Recording is restarting. Try again in a few seconds.")
+            segs = self._clip_pieces(finished, seconds)
             if not segs:
                 raise RuntimeError("Nothing recorded yet. Wait a few seconds and try again.")
-            n = max(1, -(-seconds // SEGMENT_SECONDS))
-            segs = segs[-n:]
             stamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             folder = self.out_dir / game if game else self.out_dir
             folder.mkdir(parents=True, exist_ok=True)
@@ -731,6 +886,43 @@ class Recorder:
             log(f"Saved {out.name}")
             return out
 
+    def _clip_pieces(self, segs, seconds):
+        """The newest pieces that make up the last `seconds`: one unbroken
+        stretch, all recorded the same way (settings can change in between)."""
+        if not segs:
+            return []
+        want = max(1, -(-seconds // SEGMENT_SECONDS))
+        kind = self.runs.get(self._run_of(segs[-1]))
+        picked = [segs[-1]]
+        try:
+            later = segs[-1].stat().st_mtime
+        except OSError:
+            return []
+        for p in reversed(segs[:-1]):
+            if len(picked) >= want:
+                break
+            try:
+                t = p.stat().st_mtime
+            except OSError:
+                break
+            if later - t > MAX_JOIN_GAP or self.runs.get(self._run_of(p)) != kind:
+                break
+            picked.append(p)
+            later = t
+        return picked[::-1]
+
+    def _piece_lengths(self):
+        """MKV pieces: how long each one's picture is, from FFmpeg's piece lists."""
+        out = {}
+        for lst in self.buf_dir.glob("list_*.csv"):
+            try:
+                for line in lst.read_text(encoding="utf-8", errors="replace").splitlines():
+                    name, start, end = line.rsplit(",", 2)
+                    out[Path(name.strip('"')).name] = float(end) - float(start)
+            except (OSError, ValueError):
+                pass
+        return out
+
     def _join_input(self, segs):
         """FFmpeg input arguments that read `segs` as one clip.
 
@@ -742,11 +934,20 @@ class Recorder:
         restart) are still joined run by run with the concat list."""
         lst = self.buf_dir / "concat.txt"
         if self.seg_ext != "ts":
-            lst.write_text("".join(f"file '{p.name}'\n" for p in segs), encoding="utf-8")
+            # Each MKV piece starts at zero. Without the exact picture length,
+            # the next piece would start after the (slightly longer) sound and
+            # leave a frame-long hole at every join.
+            lengths = self._piece_lengths()
+            lines = []
+            for p in segs:
+                lines.append(f"file '{p.name}'\n")
+                if lengths.get(p.name, 0) > 0:
+                    lines.append(f"duration {lengths[p.name]:.6f}\n")
+            lst.write_text("".join(lines), encoding="utf-8")
             return ["-f", "concat", "-safe", "0", "-i", lst.name]
         runs = []
         for p in segs:  # seg_<run>_<n>.ts
-            run = p.name.rsplit("_", 1)[0]
+            run = self._run_of(p)
             if runs and runs[-1][0] == run:
                 runs[-1][1].append(p.name)
             else:

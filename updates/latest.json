@@ -1,8 +1,8 @@
 {
-  "version": "5.7",
-  "file": "ClipDrop-Setup-5.7.exe",
-  "size": 552676,
-  "sha256": "adad4f943bbaf857aaeea05c7077e7b4db1a2571fda8118cae5c8d501837a23d",
-  "notes_en": "**ClipDrop 5.7: smoother clips**\n- Clips no longer drop frames while you play. The picture now stays on the graphics card from capture to the encoder, instead of being copied through the CPU every frame.\n- If the fast capture fails once, ClipDrop no longer drops to the slow screen capture for good. It only switches after 3 failures in a row, and tries the fast one again after 5 minutes.\n- Fixed a small hitch every 2 seconds in saved clips.\n- If your microphone won't open, ClipDrop now tries simpler settings before giving up.",
-  "notes_ar": "**ClipDrop 5.7: مقاطع أنعم**\n- المقاطع ما عادت تفقد إطارات وأنت تلعب. الصورة الحين تبقى على كرت الشاشة من التصوير إلى الترميز، بدل ما تنتقل للمعالج مع كل إطار.\n- إذا فشل التصوير السريع مرة، ClipDrop ما عاد ينتقل للتصوير البطيء على طول. ينتقل فقط بعد 3 محاولات فاشلة ورا بعض، ويرجع يجرب السريع بعد 5 دقايق.\n- انحلت رجفة صغيرة كانت تصير كل ثانيتين في المقاطع المحفوظة.\n- إذا ما اشتغل المايك، ClipDrop الحين يجرب إعدادات أبسط قبل ما يستسلم."
+  "version": "5.8",
+  "file": "ClipDrop-Setup-5.8.exe",
+  "size": 555826,
+  "sha256": "dfeedf9641a9c3dccfcbaba55aedc319f15d3f5f5ea3403390062d9dcba5ae13",
+  "notes_en": "**ClipDrop 5.8: clips are always the latest moments**\n- Fixed: after the screen capture froze, every clip saved the same old minute. ClipDrop now notices within 10 seconds and restarts the capture, and it never hands you old footage. If you save during a freeze, you get a message to try again in a few seconds.\n- Microphones that wouldn't open (like some wireless headsets) now work through a second sound method.\n- If your headset turns off and on, game sound and the mic come back by themselves.\n- Changing a setting no longer throws away your last minutes of recording.\n- AV1 clips no longer skip a frame every 2 seconds.\n- Smaller fixes: the save folder can't be left empty, the log stays small and shows times, Snipping Tool and ChatGPT aren't treated as games, and a clip renamed right after saving shows up at once.",
+  "notes_ar": "**ClipDrop 5.8: المقاطع دايم آخر اللحظات**\n- انحلت مشكلة: لما يعلق تصوير الشاشة، كل مقطع كان ينحفظ بنفس الدقيقة القديمة. الحين ClipDrop ينتبه خلال 10 ثواني ويعيد تشغيل التصوير، وما يعطيك لقطات قديمة أبدًا. إذا حفظت وقت التعليق، تطلع لك رسالة تجرب بعد كم ثانية.\n- المايكات اللي ما كانت تشتغل (مثل بعض السماعات اللاسلكية) الحين تشتغل بطريقة صوت ثانية.\n- إذا طفت السماعة ورجعت، صوت اللعبة والمايك يرجعون لحالهم.\n- تغيير الإعدادات ما عاد يمسح آخر دقايق التسجيل.\n- مقاطع AV1 ما عادت تفقد إطار كل ثانيتين.\n- إصلاحات أصغر: مجلد الحفظ ما يصير فاضي، السجل يبقى صغير ويكتب الوقت، أداة القصاصة و ChatGPT ما يُحسبون ألعاب، والمقطع اللي تغير اسمه بعد الحفظ مباشرة يطلع على طول."
 }

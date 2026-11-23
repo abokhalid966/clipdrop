@@ -54,6 +54,19 @@ if (-not $haveDeps) {
     if ($LASTEXITCODE -ne 0) { throw 'Could not install packages' }
 }
 
+# ---- 2b. second sound library, for microphones the first one can't open
+# (optional: if it can't be installed, ClipDrop still works without it)
+$keep = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & $py -c "import sounddevice" 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Step 'Installing extra microphone support'
+        & $py -m pip install --no-warn-script-location --disable-pip-version-check --progress-bar off sounddevice 2>&1 | Out-Null
+    }
+} catch { }
+$ErrorActionPreference = $keep
+
 # ---- 3. FFmpeg
 if (-not (Test-Path (Join-Path $ffDir 'ffmpeg.exe'))) {
     Step 'Downloading FFmpeg (about 100 MB)'
