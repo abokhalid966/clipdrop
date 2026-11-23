@@ -78,7 +78,9 @@ NOT_GAMES = {"explorer", "chrome", "msedge", "firefox", "opera", "brave", "disco
              "windowsterminal", "cmd", "powershell", "applicationframehost", "searchhost",
              "shellexperiencehost", "startmenuexperiencehost", "obs64", "spotify", "vlc",
              "lockapp", "textinputhost", "taskmgr", "claude", "whatsapp", "telegram",
-             "nvidia app", "nvcontainer", "wscript", "mpc-hc64", "photos", "systemsettings"}
+             "nvidia app", "nvcontainer", "wscript", "mpc-hc64", "photos", "systemsettings",
+             "snippingtool", "screenclippinghost", "screensketch", "chatgpt", "copilot", "msteams",
+             "ms-teams", "slack", "zoom", "notepad", "winword", "excel", "powerpnt", "acrobat"}
 
 KEY_NAMES = {"printscreen": 0x2C, "prtsc": 0x2C, "pause": 0x13, "home": 0x24, "end": 0x23,
              "insert": 0x2D, "delete": 0x2E, "pageup": 0x21, "pagedown": 0x22,
