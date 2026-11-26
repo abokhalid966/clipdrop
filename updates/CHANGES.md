@@ -1,5 +1,27 @@
 # ClipDrop versions
 
+## 5.9
+
+**ClipDrop 5.9: recording can't stay off by accident**
+- If recording is off and you press your clip key (or tap Save on your phone), ClipDrop turns recording back on and tells you. Before, it stayed off and no new clips were saved.
+- The phone page shows "Recording is off" with a Turn on button whenever recording is off.
+- The "Recording on" switch in the menu by the clock moved down, away from "Save clip now", so one slip can't turn recording off.
+- If ClipDrop starts with recording off, you get a notice.
+- A frozen screen capture is restarted without switching to a slower capture method.
+- The log now records when recording is turned on or off, and every clip that couldn't be saved.
+
+<div dir="rtl">
+
+**ClipDrop 5.9: التسجيل ما يوقف بالغلط**
+- إذا كان التسجيل متوقف وضغطت زر حفظ المقطع (أو حفظ من الجوال)، ClipDrop يرجّع التسجيل ويعلمك. قبل كان يبقى متوقف وما ينحفظ أي مقطع جديد.
+- صفحة الجوال تعرض «التسجيل متوقف» مع زر شغّله كل ما كان التسجيل متوقف.
+- زر «التسجيل يعمل» في القائمة اللي جنب الساعة نزل تحت، بعيد عن «حفظ مقطع الآن»، عشان ضغطة غلط ما توقف التسجيل.
+- إذا اشتغل ClipDrop والتسجيل متوقف، يطلع لك تنبيه.
+- إذا علق تصوير الشاشة، يعاد تشغيله بدون ما ينتقل لطريقة تصوير أبطأ.
+- السجل الحين يكتب متى انشغل أو توقف التسجيل، وكل مقطع ما قدر ينحفظ.
+
+</div>
+
 ## 5.8
 
 **ClipDrop 5.8: clips are always the latest moments**

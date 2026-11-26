@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.8"
+VERSION = "5.9"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -131,6 +131,12 @@ TEXT_AR = {
     "ClipDrop updated to {v}": "تم تحديث ClipDrop إلى {v}",
     "Sent to your phone: {n} file(s)": "جاهز لجوالك: {n} ملف",
     "ClipDrop isn't running and couldn't be started.": "ClipDrop لا يعمل وتعذّر تشغيله.",
+    "Recording was off. It's on again now, so your next clip will work.":
+        "كان التسجيل متوقف. شغّلناه الحين، والمقطع الجاي بينحفظ.",
+    "Recording is off": "التسجيل متوقف",
+    "Press your clip key or open ClipDrop to turn it back on.":
+        "اضغط زر حفظ المقطع أو افتح ClipDrop عشان ترجّعه.",
+    "Recording is on again": "رجع التسجيل يشتغل",
 }
 
 
@@ -1143,10 +1149,20 @@ class App:
 
     # --- saving clips
 
-    def save_clip(self, seconds=None):
+    def save_clip(self, seconds=None, source="phone"):
+        try:
+            return self._save_clip(seconds, source)
+        except Exception as e:
+            print(f"Could not save clip ({source}): {e}")
+            raise
+
+    def _save_clip(self, seconds, source):
         if not self.recorder:
             if not self.settings.get("recording_on", True):
-                raise RuntimeError("Recording is turned off in Settings.")
+                # You asked for a clip, so you want recording: turn it back on
+                # instead of leaving it off without you noticing.
+                self.update_settings({"recording_on": True}, source=f"clip asked for from {source}")
+                raise RuntimeError("Recording was off. It's on again now, so your next clip will work.")
             raise RuntimeError("Not recording right now: no game is open (Settings > When to record).")
         try:
             seconds = int(seconds or self.settings["hotkeys"][0]["seconds"])
@@ -1172,16 +1188,16 @@ class App:
             if s.get("overlay", True):
                 winutil.show_overlay(tr(s, "Saving clip..."), 15)
         try:
-            p = self.save_clip(seconds)
+            p = self.save_clip(seconds, source="hotkey")
             if s.get("overlay", True):
                 winutil.show_overlay(tr(s, "Clip saved  •  {secs}s", secs=self.last_clip["seconds"]))
             return p
         except Exception as e:
-            print(f"Could not save clip: {e}")
             if sound != "off":
                 winutil.play_sound("error")
             if s.get("overlay", True):
-                winutil.show_overlay(tr(s, "Couldn't save the clip"), 3, ok=False)
+                msg = str(e) if str(e).startswith("Recording was off") else "Couldn't save the clip"
+                winutil.show_overlay(tr(s, msg), 5, ok=False)
 
     # --- info for the page
 
@@ -1230,10 +1246,12 @@ class App:
             "on_windows": winutil.IS_WIN,
         }
 
-    def update_settings(self, new):
+    def update_settings(self, new, source="settings page"):
         old = dict(self.settings)
         self.settings.update(clean_settings(new, self.settings))
         save_settings(self.settings)
+        if old.get("recording_on", True) != self.settings.get("recording_on", True):
+            print(f"Recording turned {'on' if self.settings.get('recording_on', True) else 'OFF'} ({source})")
         # settings that change how we record (the save folder and hotkeys don't:
         # the recorder reads the folder when saving, and only needs a new length)
         rec_keys = ("fps", "bitrate", "height", "encoder", "monitor", "show_mouse", "video_format",
@@ -1772,13 +1790,17 @@ def run_tray(app, server):
             os.startfile(folder)
 
     def toggle_recording(*_):
-        app.update_settings({"recording_on": not app.settings.get("recording_on", True)})
+        on = not app.settings.get("recording_on", True)
+        app.update_settings({"recording_on": on}, source="tray menu")
+        if on:
+            app.notify("ClipDrop", tr(app.settings, "Recording is on again"))
+        else:
+            app.notify(tr(app.settings, "Recording is off"),
+                       tr(app.settings, "Press your clip key or open ClipDrop to turn it back on."))
 
     menu = pystray.Menu(
         pystray.MenuItem(T("Open ClipDrop"), lambda *_: winutil.open_app_window(local + "/"), default=True),
         pystray.MenuItem(first_hotkey_label, lambda *_: app.save_clip_from_hotkey()),
-        pystray.MenuItem(T("Recording on"), toggle_recording,
-                         checked=lambda *_: app.settings.get("recording_on", True)),
         pystray.MenuItem(T("Send files to phone"), lambda *_: winutil.open_app_window(local + "/#files")),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(T("Connect phone (QR code)"), lambda *_: webbrowser.open(local + "/pair")),
@@ -1787,6 +1809,9 @@ def run_tray(app, server):
         pystray.MenuItem(T("Help"), lambda *_: winutil.open_app_window(local + "/help")),
         pystray.MenuItem(update_label, update_click),
         pystray.Menu.SEPARATOR,
+        # kept away from "Save clip now", so a slip of the mouse can't turn recording off
+        pystray.MenuItem(T("Recording on"), toggle_recording,
+                         checked=lambda *_: app.settings.get("recording_on", True)),
         pystray.MenuItem(T("Quit ClipDrop"), quit_app),
     )
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -1871,6 +1896,12 @@ def main():
     print(f"   Phone link:   {app.public_url}")
     print(" If Windows asks about the firewall, allow PRIVATE networks.")
     print("=" * 60)
+
+    if not app.settings.get("recording_on", True):
+        print("Recording is OFF (turned off earlier). Press the clip key or use the menu to turn it on.")
+        threading.Timer(8.0, lambda: app.settings.get("recording_on", True) or app.notify(
+            tr(app.settings, "Recording is off"),
+            tr(app.settings, "Press your clip key or open ClipDrop to turn it back on."))).start()
 
     first_run = not (CACHE_DIR / "paired").exists()
     if first_run or "--pair" in sys.argv:

@@ -747,9 +747,12 @@ class Recorder:
             err = (self.proc.stderr.read() or b"").decode("utf-8", "replace").strip()
             self.last_error = err[-500:]
             log(f"FFmpeg stopped ({mode}): {self.last_error or 'no message'}")
-            # getting stuck counts as a failure too: if this capture keeps
-            # freezing, move to a slower one that works
-            if time.time() - started < 10 or stuck:
+            # Only crashes move us to a slower capture. A freeze is fixed by a
+            # restart, and freezes come from the PC (screen asleep or locked,
+            # a game switching display mode), so a slower capture freezes too.
+            if stuck:
+                quick_fails = 0
+            elif time.time() - started < 10:
                 quick_fails += 1
             else:
                 quick_fails = 0
