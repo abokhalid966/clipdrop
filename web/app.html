@@ -402,6 +402,7 @@ body:after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(saf
   <button class="icon" id="gear" title="Settings" aria-label="Settings"><svg class="i"><use href="#i-set"/></svg></button>
  </div>
  <div class="tabs" id="tabs"><button data-tab="clips" class="on"><span>Clips</span><span class="tn" id="ccount"></span></button><button data-tab="files"><span>Files</span><span class="tn" id="fcount"></span><span class="cnt" id="fcnt"></span></button></div>
+ <div class="upbar offbar hide" id="offbar"><b>Recording is off, so clips can't be saved.</b><button id="offon">Turn on</button></div>
  <div class="upbar hide" id="upbar"><svg class="i"><use href="#i-new"/></svg><b id="upbart"></b><button id="upbarb">What's new</button></div>
  <!-- clips tools -->
  <div id="ctools">
@@ -788,6 +789,7 @@ function paintStatus(){
  paintFab();
  const st=status.state,dot=$("#dot");
  dot.className="dot"+(st==="recording"?" rec":st==="waiting"?" wait":"");
+ $("#offbar").classList.toggle("hide",st!=="off");
  $("#sttxt").textContent=st==="recording"?(T("Recording now")+(status.game?" · "+status.game:"")):st==="waiting"?T("Waiting for a game"):st==="off"?T("Recording off"):T("Starting…");
  const hk=status.hotkeys||[];
  $("#pill").title=hk.map(h=>h.keys+" → "+fmtLen(h.seconds)+(h.ok?"":" ("+T(h.error||"not active")+")")).join("\n");
@@ -864,7 +866,7 @@ $("#popx").onclick=hidePop;$("#popsave").addEventListener("click",()=>setTimeout
 async function clipNow(seconds){
  $("#lens").classList.remove("open");
  const f=$("#fab");f.classList.add("busy");
- try{const d=await api("/api/clip",seconds?{seconds}:{});lastClipAt=null;await load();popup(d.file)}catch(e){toast(e.message,1)}
+ try{const d=await api("/api/clip",seconds?{seconds}:{});lastClipAt=null;await load();popup(d.file)}catch(e){toast(e.message,1);load()}
  f.classList.remove("busy");
 }
 $("#fab").onclick=()=>{
@@ -1258,6 +1260,7 @@ async function refreshUpdate(){
 }
 async function openUpdate(){await refreshUpdate();$("#upsheet").classList.add("open")}
 function closeUpdate(){$("#upsheet").classList.remove("open");if(location.hash==="#update")history.replaceState(null,"",location.pathname+location.search)}
+$("#offon").onclick=async()=>{try{await api("/api/settings",{recording_on:true});toast(T("Recording is on again"));setTimeout(load,1500)}catch(e){toast(e.message,1)}};
 $("#upbarb").onclick=openUpdate;$("#upx").onclick=closeUpdate;$("#uplater").onclick=closeUpdate;
 $("#upsheet").addEventListener("click",e=>{if(e.target.id==="upsheet")closeUpdate()});
 $("#upgo").onclick=async()=>{const v=UP.version;try{await api("/api/update/install",{});closeUpdate();showUpFull(v)}catch(e){toast(e.message,1)}};

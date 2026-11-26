@@ -4,7 +4,7 @@
 Unicode true
 !define APP "ClipDrop"
 !ifndef VERSION
-  !define VERSION "5.8"
+  !define VERSION "5.9"
 !endif
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP}"
 !ifndef OUTDIR
