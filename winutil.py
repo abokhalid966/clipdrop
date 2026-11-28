@@ -58,6 +58,11 @@ if IS_WIN:
     _sig(user32.SetLayeredWindowAttributes, wintypes.BOOL, HW, wintypes.DWORD, ctypes.c_ubyte, wintypes.DWORD)
     _sig(user32.SetWindowDisplayAffinity, wintypes.BOOL, HW, wintypes.DWORD)
     _sig(user32.UnregisterClassW, wintypes.BOOL, wintypes.LPCWSTR, H)
+    _sig(user32.GetCursorPos, wintypes.BOOL, ctypes.POINTER(wintypes.POINT))
+    _sig(user32.OpenInputDesktop, H, wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    _sig(user32.CloseDesktop, wintypes.BOOL, H)
+    _sig(user32.GetUserObjectInformationW, wintypes.BOOL, H, ctypes.c_int, ctypes.c_void_p,
+         wintypes.DWORD, ctypes.POINTER(wintypes.DWORD))
     try:
         user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))  # per-monitor v2: real pixel sizes
     except Exception:
@@ -310,6 +315,39 @@ def foreground_app():
         return nice_name(exe)
     except Exception:
         return None
+
+
+def cursor_pos():
+    """Where the mouse pointer is, or None (used to tell if someone is using the PC)."""
+    if not IS_WIN:
+        return None
+    try:
+        pt = wintypes.POINT()
+        if user32.GetCursorPos(ctypes.byref(pt)):
+            return (pt.x, pt.y)
+    except Exception:
+        pass
+    return None
+
+
+def screen_locked():
+    """True while the PC is locked (or on the sign-in / UAC screen)."""
+    if not IS_WIN:
+        return False
+    try:
+        desk = user32.OpenInputDesktop(0, False, 0x0001)  # DESKTOP_READOBJECTS
+        if not desk:
+            return True  # the lock screen's desktop can't be opened by apps
+        try:
+            buf = ctypes.create_unicode_buffer(64)
+            need = wintypes.DWORD(0)
+            if user32.GetUserObjectInformationW(desk, 2, buf, ctypes.sizeof(buf), ctypes.byref(need)):  # UOI_NAME
+                return buf.value.lower() != "default"
+            return False
+        finally:
+            user32.CloseDesktop(desk)
+    except Exception:
+        return False
 
 
 # ------------------------------------------------------------------ feedback

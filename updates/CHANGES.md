@@ -1,5 +1,27 @@
 # ClipDrop versions
 
+## 6.0
+
+**ClipDrop 6.0: no more 1 fps clips**
+- ClipDrop now checks the recording every 20 seconds and counts how many really new pictures it gets each second. If a game is in front (or you're moving the mouse) and it stays at about 1 picture a second for a minute, ClipDrop restarts the capture by itself. Before, a broken capture could keep saving 1 fps clips for hours.
+- If a restart doesn't fix it, ClipDrop tries another capture method for 10 minutes, then goes back to the fastest one.
+- The capture also restarts when your PC wakes from sleep or you unlock it, which is when it used to break.
+- A still screen (desktop, paused game) is left alone, so it doesn't restart for nothing.
+- Fixed: a clip could fail to save right after the capture restarted.
+- The log notes the measured picture rate every 10 minutes, so problems are easy to spot.
+
+<div dir="rtl">
+
+**ClipDrop 6.0: خلاص ما في مقاطع 1 fps**
+- ClipDrop الحين يفحص التسجيل كل 20 ثانية ويحسب كم صورة جديدة فعلاً تجي كل ثانية. إذا كانت لعبة قدامك (أو تحرك الماوس) وبقي على صورة وحدة تقريباً بالثانية لمدة دقيقة، يعيد تشغيل التصوير بنفسه. قبل كان التصوير الخربان يقدر يحفظ مقاطع 1 fps لساعات.
+- إذا ما نفعت إعادة التشغيل، يجرب ClipDrop طريقة تصوير ثانية لمدة 10 دقايق، وبعدها يرجع للأسرع.
+- التصوير كمان يعاد تشغيله لما يصحى جهازك من السكون أو تفتح قفل الجهاز، لأن هذا الوقت اللي كان يخرب فيه.
+- الشاشة الثابتة (سطح المكتب، لعبة موقفة) ما يلمسها، عشان ما يعيد التشغيل على الفاضي.
+- تم الإصلاح: أحياناً المقطع ما كان ينحفظ بعد إعادة تشغيل التصوير مباشرة.
+- السجل يكتب سرعة الصور المقاسة كل 10 دقايق، عشان تبان المشاكل بسهولة.
+
+</div>
+
 ## 5.9
 
 **ClipDrop 5.9: recording can't stay off by accident**
