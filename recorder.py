@@ -41,11 +41,24 @@ STALL_SECONDS = 10
 # Pieces further apart than this aren't one stretch of recording (the
 # recorder was off in between), so a clip never joins across that gap.
 MAX_JOIN_GAP = SEGMENT_SECONDS + 15
+# The picture check: every PICTURE_CHECK_SECONDS one finished piece is looked
+# at to count how many really different pictures it holds per second. A
+# capture that went bad (seen after the PC's screen was off) still writes
+# 60 frames a second, but they are copies of about 1 picture a second.
+PICTURE_CHECK_SECONDS = 20
+LOW_PICTURE_RATE = 4        # fewer new pictures a second than this is "bad"...
+BAD_CHECKS_IN_A_ROW = 3     # ...this many checks in a row (about a minute)
 
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+BELOW_NORMAL = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
 # The recorder gets a bit more CPU time than normal apps, so a busy game
 # doesn't starve it of time to grab frames.
 ABOVE_NORMAL = getattr(subprocess, "ABOVE_NORMAL_PRIORITY_CLASS", 0)
+
+try:
+    import winutil
+except Exception:  # pragma: no cover
+    winutil = None
 
 try:
     import numpy as np
@@ -551,6 +564,12 @@ class Recorder:
         self._restart = threading.Event()
         self._newest = None      # name of the newest piece, and when it first showed up
         self._newest_at = 0.0
+        self.run_id = None       # the FFmpeg run that is recording now
+        self.run_started = 0.0
+        self.game_in_front = False   # set by the app: a game is the window in front
+        self.picture_fps = None      # new pictures a second in the last checked piece
+        self._renew = None           # (reason, slower): restart the capture, it went bad
+        self._renew_lock = threading.Lock()
 
     @property
     def out_dir(self):
@@ -622,6 +641,7 @@ class Recorder:
         # pieces can only be joined with pieces recorded the same way
         self.runs[run] = repr((self._video_input(mode), self._scale_filter(), self.encoder,
                                self.s.get("fps"), mic, self.seg_ext))
+        self.run_id, self.run_started = run, time.time()
         cmd = [self.ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
                "-thread_queue_size", "1024"] + self._video_input(mode)
         cmd += ["-thread_queue_size", "1024", "-f", "s16le", "-ar", str(SAMPLE_RATE),
@@ -689,12 +709,14 @@ class Recorder:
         self.encoder = pick_encoder(self.ffmpeg, self.s.get("video_format", "h264"), self.s.get("encoder", "auto"))
         log(f"Encoder: {self.encoder}")
         threading.Thread(target=self._supervise, daemon=True).start()
+        threading.Thread(target=self._watch_picture, daemon=True).start()
 
     def _supervise(self):
         modes = self._modes()
         mi = 0
         quick_fails = 0      # FFmpeg runs in a row that died within 10 s
         fell_back_at = None  # when we last moved to a slower capture method
+        picture_fallback = False  # we moved down because the picture went bad
         while not self._stop.is_set():
             mode = modes[min(mi, len(modes) - 1)]
             if mode.endswith("_gpu") and not self._gpu_ready(mode):
@@ -705,14 +727,29 @@ class Recorder:
             log(f"Recording {what} ({mode}, {self.s['fps']} fps, {self.s['bitrate']}), "
                 f"keeping last {self.buffer_seconds}s")
             self._restart.clear()
+            self._take_renew()
             self._launch(mode)
             started = time.time()
             segs = self._segments()
             self._newest, self._newest_at = (segs[-1].name if segs else None), started
             self.running = True
             stuck = False
+            renew = None
+            tick = started
             while self.proc.poll() is None and not self._stop.is_set():
                 self._cleanup()
+                now = time.time()
+                if now - tick > 20:
+                    # The PC was asleep: the capture often comes back broken
+                    # (frozen, or only ~1 new picture a second), so start fresh.
+                    renew = (f"the PC was asleep for {int(now - tick)} seconds", False)
+                    break
+                tick = now
+                renew = self._take_renew()
+                if not renew and picture_fallback and now - fell_back_at > 600:
+                    renew = ("trying the faster capture again", False)
+                if renew:
+                    break
                 problem = self._stalled(started)
                 if not problem and self._restart.is_set():
                     problem = "a clip was asked for but no new video came in"
@@ -722,10 +759,12 @@ class Recorder:
                     break
                 self._stop.wait(1)
             self.running = False
+            if renew:
+                log(f"Restarting the capture ({renew[0]})")
             if self.audio:
                 self.audio.stop()
             if self.proc.poll() is None:
-                # stopped or stuck: never leave this FFmpeg running on its own
+                # stopped, stuck or restarting: never leave this FFmpeg running on its own
                 try:
                     self.proc.kill()
                 except Exception:
@@ -744,33 +783,176 @@ class Recorder:
                     pass
             if self._stop.is_set():
                 break
+            # A stopped FFmpeg can leave its last piece empty (it was just
+            # started): an empty piece makes joining fail, so drop it.
+            try:
+                self.proc.wait(timeout=5)
+            except Exception:
+                pass
+            for p in self._segments():
+                try:
+                    if self._run_of(p) == self.run_id and p.stat().st_size < 1024:
+                        p.unlink()
+                except OSError:
+                    pass
             err = (self.proc.stderr.read() or b"").decode("utf-8", "replace").strip()
             self.last_error = err[-500:]
-            log(f"FFmpeg stopped ({mode}): {self.last_error or 'no message'}")
+            if not renew:
+                log(f"FFmpeg stopped ({mode}): {self.last_error or 'no message'}")
+            locked = bool(winutil and winutil.screen_locked())
             # Only crashes move us to a slower capture. A freeze is fixed by a
             # restart, and freezes come from the PC (screen asleep or locked,
             # a game switching display mode), so a slower capture freezes too.
-            if stuck:
+            # Crashes while the PC is locked don't count either: no capture
+            # can see the lock screen, and the PC is fine once it's unlocked.
+            if stuck or renew or locked:
                 quick_fails = 0
             elif time.time() - started < 10:
                 quick_fails += 1
             else:
                 quick_fails = 0
+            if renew and renew[1] and mi < len(modes) - 1:
+                # restarting didn't fix the picture: try the next method for a while
+                mi += 1
+                fell_back_at = time.time()
+                picture_fallback = True
+                log(f"Switching to the {modes[mi]} capture for a while")
             # One hiccup is not a reason to drop to a slower method for good:
             # only move down after 3 quick failures in a row, and try the best
             # method again 5 minutes later.
-            if quick_fails >= 3 and mi < len(modes) - 1:
+            elif quick_fails >= 3 and mi < len(modes) - 1:
                 mi += 1
                 quick_fails = 0
                 fell_back_at = time.time()
+                picture_fallback = False
                 log(f"Switching to the slower {modes[mi]} capture")
             elif mi > 0 and fell_back_at and time.time() - fell_back_at > 300:
                 mi = 0
                 quick_fails = 0
                 fell_back_at = None
+                picture_fallback = False
                 log("Trying the faster capture again")
-            # wait longer after each failure in a row (2, 4, 8 ... 60 s)
-            self._stop.wait(min(60, 2 ** (quick_fails + 1)) if quick_fails else 2)
+            if renew:
+                self._stop.wait(0.5)
+            elif locked:
+                self._stop.wait(5)
+            else:
+                # wait longer after each failure in a row (2, 4, 8 ... 60 s)
+                self._stop.wait(min(60, 2 ** (quick_fails + 1)) if quick_fails else 2)
+
+    def _ask_renew(self, reason, slower=False):
+        """Ask the capture to restart (from the picture watcher)."""
+        with self._renew_lock:
+            if not self._renew:
+                self._renew = (reason, slower)
+
+    def _take_renew(self):
+        with self._renew_lock:
+            r, self._renew = self._renew, None
+            return r
+
+    # ---------- picture check
+
+    def _watch_picture(self):
+        """Watches that the capture really delivers moving pictures.
+
+        A bad capture looks fine from outside: pieces keep coming, each with
+        60 frames a second, but the frames are copies of ~1 picture a second.
+        So every PICTURE_CHECK_SECONDS we count the really different pictures
+        in a finished piece. A still screen (desktop, paused game) also gives
+        few new pictures, so a low count only counts as bad while something
+        should be moving: a game is in front, or the mouse is being moved.
+        Also restarts the capture right after the PC is unlocked."""
+        moves = []            # last few seconds: did the mouse move?
+        last_pos = None
+        was_locked = False
+        unlocked_at = None
+        next_check = time.time() + PICTURE_CHECK_SECONDS
+        next_log = time.time() + 60
+        streak = 0            # bad checks in a row
+        fails = 0             # restarts in a row that didn't fix the picture
+        quiet_until = 0.0
+        while not self._stop.wait(1):
+            try:
+                now = time.time()
+                pos = winutil.cursor_pos() if winutil else None
+                moves = (moves + [pos is not None and last_pos is not None and pos != last_pos])[-6:]
+                last_pos = pos
+                locked = bool(winutil and winutil.screen_locked())
+                if was_locked and not locked:
+                    unlocked_at = now
+                    log("PC unlocked")
+                elif locked and not was_locked:
+                    log("PC locked")
+                was_locked = locked
+                if unlocked_at and now - unlocked_at >= 3:
+                    unlocked_at = None
+                    self._ask_renew("the PC was unlocked")
+                    next_check = now + PICTURE_CHECK_SECONDS + 10
+                    streak = 0
+                    continue
+                if locked or now < next_check:
+                    continue
+                next_check = now + PICTURE_CHECK_SECONDS
+                if not self.running or now - self.run_started < 20:
+                    continue
+                segs = [p for p in self._segments() if self._run_of(p) == self.run_id]
+                if len(segs) < 3:
+                    continue
+                fps = self._picture_rate(segs[-2])
+                if fps is None:
+                    continue
+                self.picture_fps = round(fps, 1)
+                should_move = self.game_in_front or sum(moves) >= 3
+                if now >= next_log:
+                    next_log = now + 600
+                    log(f"Picture check: {fps:.1f} new pictures a second ({self.mode})")
+                if fps >= min(LOW_PICTURE_RATE, float(self.s.get("fps") or 60) / 5):
+                    if fails:
+                        log(f"Picture is fine again: {fps:.1f} new pictures a second")
+                    streak = fails = 0
+                    quiet_until = 0.0
+                    continue
+                if not should_move:
+                    continue  # probably just a still screen: can't tell, so do nothing
+                streak += 1
+                if now >= quiet_until:
+                    log(f"Picture check: only {fps:.1f} new pictures a second while "
+                        f"{'a game is in front' if self.game_in_front else 'the mouse is moving'} "
+                        f"({min(streak, BAD_CHECKS_IN_A_ROW)}/{BAD_CHECKS_IN_A_ROW})")
+                if streak >= BAD_CHECKS_IN_A_ROW and now >= quiet_until:
+                    fails += 1
+                    streak = 0
+                    self._ask_renew(f"only {fps:.1f} new pictures a second", slower=fails == 2)
+                    # give it a minute; if restarting keeps not helping, the
+                    # screen is probably just still, so ask less and less often
+                    quiet_until = now + (60 if fails <= 2 else min(900, 180 * 2 ** (fails - 3)))
+                    next_check = now + PICTURE_CHECK_SECONDS + 10
+            except Exception as e:  # never let the check stop the recording
+                log(f"Picture check problem: {e!r}")
+                next_check = time.time() + PICTURE_CHECK_SECONDS * 3
+
+    def _picture_rate(self, piece):
+        """How many really different pictures a second `piece` holds, or None."""
+        cmd = [self.ffmpeg, "-hide_banner", "-nostats", "-loglevel", "info", "-hwaccel", "auto",
+               "-threads", "2", "-i", str(piece), "-an", "-sn", "-dn",
+               "-vf", "scale=320:-2,showinfo,mpdecimate,showinfo", "-f", "null", "-"]
+        try:
+            r = subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.PIPE, timeout=20,
+                               creationflags=NO_WINDOW | BELOW_NORMAL)
+        except (subprocess.TimeoutExpired, OSError):
+            return None
+        frames = new = 0
+        for line in r.stderr.decode("utf-8", "replace").splitlines():
+            if "pts_time:" in line:  # one such line per frame (others are extra details)
+                if "Parsed_showinfo_1 " in line:
+                    frames += 1
+                elif "Parsed_showinfo_3 " in line:
+                    new += 1
+        if frames < 10:
+            return None
+        return new / (frames / float(self.s.get("fps") or 60))
 
     def _stalled(self, started):
         """Why the running FFmpeg looks stuck, or '' if it's fine.
@@ -812,6 +994,13 @@ class Recorder:
                 p.unlink()
             except OSError:
                 pass  # still open, try next time
+        for p in segs[-keep:-1]:
+            # an empty piece left by an FFmpeg that was stopped as it began it
+            try:
+                if p.stat().st_size < 1024:
+                    p.unlink()
+            except OSError:
+                pass
         live = {self._run_of(p) for p in segs[-keep:]}
         for run in [r for r in self.runs if r not in live and r != max(self.runs)]:
             self.runs.pop(run, None)

@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import recorder as rec_mod  # noqa: E402
 import winutil  # noqa: E402
 
-VERSION = "5.9"
+VERSION = "6.0"
 UPDATE_REPO = os.environ.get("CLIPDROP_UPDATE_REPO", "abokhalid966/clipdrop")  # where new versions are published
 HERE = Path(__file__).resolve().parent
 SETTINGS_FILE = HERE / "settings.json"
@@ -1114,6 +1114,9 @@ class App:
                 s = self.settings
                 g = winutil.foreground_game(s.get("extra_games", []), s.get("not_games", []))
                 now = time.time()
+                if self.recorder:
+                    # the picture check only expects moving pictures while a game is in front
+                    self.recorder.game_in_front = bool(g)
                 if g:
                     if not self.game or self.game["hwnd"] != g["hwnd"]:
                         print(f"Game detected: {g['name']}")
@@ -1222,6 +1225,7 @@ class App:
             "recording": state == "recording",
             "encoder": r.encoder if r else None,
             "capture_mode": r.mode if r else None,
+            "capture_fps": r.picture_fps if r and r.running else None,
             "game": (self.game or {}).get("name"),
             "error": r.last_error if r else "",
             "hotkeys": hk,
